@@ -956,8 +956,17 @@ def _laplace_transform(f, t, s_, simplify=True):
     """ The backend function for Laplace transforms. """
     from sympy import (re, Max, exp, pi, Abs, Min, periodic_argument as arg,
                        cos, Wild, symbols, polar_lift)
+    from sympy import Heaviside
+ 
     s = Dummy('s')
-    F = integrate(exp(-s*t) * f, (t, 0, oo))
+    g = Wild('g')
+    a = Wild('a')
+    res = f.match(g*Heaviside(t+a))
+    if res == None and diff(res[a],t) == 0:
+        F = integrate(exp(-s*t) * f, (t, 0, oo))
+    else:
+        f = res[g].replace(t,t-res[a])
+        F = integrate(exp(-s*t + s*res[a]) * f, (t, 0, oo)) 
 
     if not F.has(Integral):
         return _simplify(F.subs(s, s_), simplify), -oo, True
