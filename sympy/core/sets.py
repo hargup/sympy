@@ -641,28 +641,67 @@ class Interval(Set, EvalfMixin):
         return expr
 
     def _eval_imageset(self, f):
+        from sympy import Dummy
         from sympy.functions.elementary.miscellaneous import Min, Max
         from sympy.solvers import solve
         from sympy.core.function import diff
-        # TODO: [] manage left_open and right_open
-        #       [] handle non continous functions
+        from sympy.series import limit
+        from sympy.simplify import simplify
+        # TODO: handle piecewise defined functions
+        # TODO: handle functions with infinitely many solutions (eg, sin, tan)
+        # TODO: handle multivariate functions
 
-        _start, _end = f(self.start), f(self.end)
-        if len(f.variables) == 1:
-            solns = solve(diff(f.expr, f.variables[0]), f.variables[0])
-            minima = Min(_start, _end)
-            maxima = Max(_start, _end)
+        # var and expr are being defined this way to
+        # support Python lambda
+        try:
+            var = Dummy()
+            expr = f(var)
+        except TypeError:
+            raise NotImplementedError("Sorry, Multivariate imagesets are"
+                                      " not yet implemented, you are welcome"
+                                      " to add this feature in Sympy")
 
-            for soln in solns:
-                if soln.is_number and soln in self:
-                    f_x = f(soln)
-                    if f_x > maxima:
-                        maxima = f_x
-                    if f_x < minima:
-                        minima = f_x
+        if self.left_open:
+            _start = limit(f.expr, f.variables[0], self.start, dir="+")
+        else:
+            _start = f(self.start)
+        if self.right_open:
+            _end = limit(f.expr, f.variables[0], self.end, dir="-")
+        else:
+            _end = f(self.end)
 
-            ## Assuming the function is continous
-            return Interval(minima, maxima)
+        g = simplify(1/expr)
+        singularities = [x for x in solve(g, var)
+                         if x.is_real and x in self]
+
+        if len(singularities) == 0:
+            solns = solve(diff(expr, var), var)
+
+            extr = [_start, _end] + [f(x) for x in solns
+                                     if x.is_real and x in self]
+            start, end = Min(*extr), Max(*extr)
+
+            left_open, right_open = False, False
+            if _start <= _end:
+                # the minimum or maximum value can occur simultaneously
+                # on both the edge of the interval and in some interior
+                # point
+                if start == _start and start not in solns:
+                    left_open = self.left_open
+                if end == _end and end not in solns:
+                    right_open = self.right_open
+            else:
+                if start == _end and start not in solns:
+                    left_open = self.right_open
+                if end == _start and end not in solns:
+                    right_open = self.left_open
+
+            return Interval(start, end, left_open, right_open)
+        else:
+            return imageset(f, Interval(self.start, singularities[0],
+                                        self.left_open, True)) + \
+                imageset(f, Interval(singularities[0], self.end,
+                                     True, self.right_open))
 
     @property
     def _measure(self):
@@ -1326,6 +1365,7 @@ class FiniteSet(Set, EvalfMixin):
         from sympy.utilities import default_sort_key
         return sorted(self.args, key=default_sort_key)
 
+
 def imageset(*args):
     """ Image of set under transformation ``f``
 
@@ -1339,9 +1379,6 @@ def imageset(*args):
     >>> x = Symbol('x')
 
     >>> imageset(x, 2*x, Interval(0, 2))
-    [0, 4]
-
-    >>> imageset(lambda x: 2*x, Interval(0, 2))
     [0, 4]
 
     See Also:
