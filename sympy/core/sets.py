@@ -641,20 +641,28 @@ class Interval(Set, EvalfMixin):
         return expr
 
     def _eval_imageset(self, f):
-        # Cut out 0, perform image, add back in image of 0
-        if self.contains(0) == True:
-            return imageset(f, self - FiniteSet(0)) + imageset(f, FiniteSet(0))
-
         from sympy.functions.elementary.miscellaneous import Min, Max
-        # TODO: manage left_open and right_open better in case of
-        # non-comparable left/right (e.g. Interval(x, y))
-        _left, _right = f(self.left), f(self.right)
-        left, right = Min(_left, _right), Max(_left, _right)
-        if _right == left: # switch happened
-            left_open, right_open = self.right_open, self.left_open
-        else:
-            left_open, right_open = self.left_open, self.right_open
-        return Interval(left, right, left_open, right_open)
+        from sympy.solvers import solve
+        from sympy.core.function import diff
+        # TODO: [] manage left_open and right_open
+        #       [] handle non continous functions
+
+        _start, _end = f(self.start), f(self.end)
+        if len(f.variables) == 1:
+            solns = solve(diff(f.expr, f.variables[0]), f.variables[0])
+            minima = Min(_start, _end)
+            maxima = Max(_start, _end)
+
+            for soln in solns:
+                if soln.is_number and soln in self:
+                    f_x = f(soln)
+                    if f_x > maxima:
+                        maxima = f_x
+                    if f_x < minima:
+                        minima = f_x
+
+            ## Assuming the function is continous
+            return Interval(minima, maxima)
 
     @property
     def _measure(self):
