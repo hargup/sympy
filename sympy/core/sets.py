@@ -644,9 +644,10 @@ class Interval(Set, EvalfMixin):
         from sympy import Dummy
         from sympy.functions.elementary.miscellaneous import Min, Max
         from sympy.solvers import solve
-        from sympy.core.function import diff
+        from sympy.core.function import diff, Lambda
         from sympy.series import limit
         from sympy.simplify import simplify
+        from sympy.sets.fancysets import ImageSet
         # TODO: handle piecewise defined functions
         # TODO: handle functions with infinitely many solutions (eg, sin, tan)
         # TODO: handle multivariate functions
@@ -660,6 +661,9 @@ class Interval(Set, EvalfMixin):
             raise NotImplementedError("Sorry, Multivariate imagesets are"
                                       " not yet implemented, you are welcome"
                                       " to add this feature in Sympy")
+
+        if not self.start.is_comparable or not self.end.is_comparable:
+            return ImageSet(Lambda(var, expr), self)
 
         if self.left_open:
             _start = limit(f.expr, f.variables[0], self.start, dir="+")
