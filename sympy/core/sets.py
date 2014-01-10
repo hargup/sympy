@@ -666,11 +666,11 @@ class Interval(Set, EvalfMixin):
             return ImageSet(Lambda(var, expr), self)
 
         if self.left_open:
-            _start = limit(f.expr, f.variables[0], self.start, dir="+")
+            _start = limit(expr, var, self.start, dir="+")
         else:
             _start = f(self.start)
         if self.right_open:
-            _end = limit(f.expr, f.variables[0], self.end, dir="-")
+            _end = limit(expr, var, self.end, dir="-")
         else:
             _end = f(self.end)
 

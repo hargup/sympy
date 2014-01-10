@@ -527,6 +527,14 @@ def test_image_interval():
         Interval(-2*log(2) + 2, 1)  # Trancedental functions
 
 
+@XFAIL  # See: https://github.com/sympy/sympy/pull/2723#discussion_r8659826
+def test_image_Intersection():
+    x = Symbol('x', real=True)
+    y = Symbol('y', real=True)
+    assert imageset(x, x**2, Interval(-2, 0).intersect(Interval(x, y))) == \
+           Interval(0, 4).intersect(Interval(Min(x**2, y**2), Max(x**2, y**2)))
+
+
 def test_image_FiniteSet():
     x = Symbol('x', real=True)
     assert imageset(x, 2*x, FiniteSet(1, 2, 3)) == FiniteSet(2, 4, 6)
