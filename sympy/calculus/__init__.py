@@ -1,0 +1,1 @@
+from .singularities import infinite_discontinuties
