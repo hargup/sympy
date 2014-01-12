@@ -647,8 +647,6 @@ class Interval(Set, EvalfMixin):
         from sympy.core.function import diff
         from sympy.series import limit
         from sympy.calculus.singularities import infinite_discontinuties
-        from sympy.functions.elementary.trigonometric import sin, cos, tan, \
-            cot, sec, csc, asin, acos, atan, acot
         # TODO: handle piecewise defined functions
         # TODO: handle functions with infinitely many solutions (eg, sin, tan)
         # TODO: handle multivariate functions
@@ -666,19 +664,6 @@ class Interval(Set, EvalfMixin):
         if not self.start.is_comparable or not self.end.is_comparable:
             raise NotImplementedError("Sets with non comparable/variable"
                                       " arguments are not supported")
-
-        def _has_piecewise(e):
-            if e.is_Piecewise:
-                return e.has(var)
-            return any([_has_piecewise(a) for a in e.args])
-
-        if _has_piecewise(expr):
-            raise NotImplementedError("Expressions with Piecewise functions "
-                                      " are not yet implemented")
-
-        if expr.has(sin, cos, tan, cot, sec, csc, asin, acos, atan, acot):
-            raise NotImplementedError("Expressions containing trigonometric"
-                                      "functions are not supported")
 
         if self.left_open:
             _start = limit(expr, var, self.start, dir="+")

@@ -1,6 +1,6 @@
 from sympy import Wild, solve, simplify, log, exp, \
     sin, cos, tan, cot, sec, csc, asin, acos, atan, acot, \
-    limit, oo
+    limit, oo, Heaviside, DiracDelta, Piecewise
 
 
 def infinite_discontinuties(expr, sym):
@@ -19,24 +19,31 @@ def infinite_discontinuties(expr, sym):
     [2]
 
     """
-    def _has_piecewise(e):
-        if e.is_Piecewise:
-            return e.has(sym)
-        return any([_has_piecewise(a) for a in e.args])
 
-    if _has_piecewise(expr):
-        raise NotImplementedError("Expressions with Piecewise functions "
-                                  " are not yet implemented")
+    def _has_unsupported_func(e):
+        # Not trying for trigonometric function because they have infinitely
+        # many solutions. Currently we don't have methods to find or handle
+        # them.
+        func_list = [sin, cos, tan, cot, sec, csc, asin, acos, atan,
+                     acot, Heaviside, DiracDelta, Piecewise]
 
-    if expr.has(sin, cos, tan, cot, sec, csc, asin, acos, atan, acot):
-        # Not trying for trig function because they have infinitely
-        # many solutions. Currently we don't have methods to return or
-        # handle them.
+        if e.args == ():
+            return False
+        if any([isinstance(e, func) for func in func_list]):
+            if e.has(sym):
+                return True
+        for f in e.args:
+            if any([isinstance(f, func) for func in func_list]):
+                if f.has(sym):
+                    return True
+            return any([_has_unsupported_func(g) for g in f.args])
 
-        raise NotImplementedError("Expressions containing trigonometric"
-                                  "functions are not supported")
+    if _has_unsupported_func(expr):
+        raise NotImplementedError("Sorry, algorithms to find infinite"
+                                  " discontinuties of %s are not yet"
+                                  " implemented" % expr)
 
-    if expr.is_polynomial():
+    if expr.is_polynomial(sym):
         return []
 
     pods = []  # pod: Points of discontinuties
@@ -57,6 +64,7 @@ def infinite_discontinuties(expr, sym):
     expr = expr.rewrite(exp)
     expr_dict = expr.match(r*exp(p) + q)
     if not expr_dict[r].is_zero:
+        # exp(f) has infinite discontinuity only for f -> oo
         pods += [x for x in solve(simplify(1/expr_dict[p]), sym)
                  if limit(expr_dict[p], sym, x) == oo]
         pods += [x for x in infinite_discontinuties(expr_dict[p], sym)

@@ -13,3 +13,4 @@ def test_infinite_disconituties():
     assert infinite_discontinuties(exp(-1/(x-2)**2), x) == []
     assert infinite_discontinuties(exp(exp(1/x)), x) == [0]
     assert infinite_discontinuties(exp(-exp(1/x)), x) == []
+    assert infinite_discontinuties(1/(x - sin(2)), x) == [sin(2)]
