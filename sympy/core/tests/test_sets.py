@@ -1,6 +1,6 @@
 from sympy import (Symbol, Set, Union, Interval, oo, S, sympify, nan,
     GreaterThan, LessThan, Max, Min, And, Or, Eq, Ge, Le, Gt, Lt, Float,
-    FiniteSet, Intersection, imageset, I, true, false
+    FiniteSet, Intersection, imageset, I, true, false, E
 )
 from sympy.mpmath import mpi
 
@@ -508,14 +508,14 @@ def test_image_interval():
     x = Symbol('x', real=True)
     assert imageset(x, 2*x, Interval(-2, 1)) == Interval(-4, 2)
     assert imageset(x, 2*x, Interval(-2, 1, True, False)) == \
-            Interval(-4, 2, True, False)
+        Interval(-4, 2, True, False)
     assert imageset(x, x**2, Interval(-2, 1, True, False)) == \
-            Interval(0, 4, False, True)
+        Interval(0, 4, False, True)
     assert imageset(x, x**2, Interval(-2, 1)) == Interval(0, 4)
     assert imageset(x, x**2, Interval(-2, 1, True, False)) == \
-            Interval(0, 4, False, True)
+        Interval(0, 4, False, True)
     assert imageset(x, x**2, Interval(-2, 1, True, True)) == \
-            Interval(0, 4, False, True)
+        Interval(0, 4, False, True)
     assert imageset(x, (x - 2)**2, Interval(1, 3)) == Interval(0, 1)
     assert imageset(x, 3*x**4 - 26*x**3 + 78*x**2 - 90*x, Interval(0, 4)) == \
         Interval(-35, 0)  # Multiple Maxima
@@ -525,6 +525,8 @@ def test_image_interval():
         Interval(Rational(3, 2), oo, False)  # Multiple Infinite discontinuities
     assert imageset(x, exp(x) - 2*x, Interval(0, 1)) == \
         Interval(-2*log(2) + 2, 1)  # Trancedental functions
+    assert imageset(x, exp(1/x**2), Interval(-1, 1)) == \
+        Interval(E, oo)
 
 
 @XFAIL  # See: https://github.com/sympy/sympy/pull/2723#discussion_r8659826
