@@ -1,14 +1,16 @@
-from sympy import Wild, solve, simplify, log, exp, \
-    sin, cos, tan, cot, sec, csc, asin, acos, atan, acot, \
-    limit, oo, Heaviside, DiracDelta, Piecewise
+from sympy import Wild, solve, simplify, limit, exp, log
+from sympy.core import Add, Mul, Pow, oo
+from sympy.utilities.iterables import flatten
 
 
 def infinite_discontinuties(expr, sym):
     """
-    Find the points of infinite discontinuities of a real univariate function
+    Find the points of infinite discontinuities of a real univariate function.
+    Currently only rational functions and their composition and combinations
+    with exp and log functions are supported.
 
-    Example
-    =========
+    Examples
+    ========
 
     >>> from sympy.calculus.singularities import infinite_discontinuties
     >>> from sympy import exp, log, Symbol
@@ -17,28 +19,12 @@ def infinite_discontinuties(expr, sym):
     [2]
     >>> infinite_discontinuties(exp(1/(x-2)**2), x)
     [2]
+    >>> infinite_discontinuties(log(exp(1/(x-2)**2) + 1) + 1/(x+1), x)
+    [-1, 2]
 
     """
 
-    def _has_unsupported_func(e):
-        # Not trying for trigonometric function because they have infinitely
-        # many solutions. Currently we don't have methods to find or handle
-        # them.
-        func_list = [sin, cos, tan, cot, sec, csc, asin, acos, atan,
-                     acot, Heaviside, DiracDelta, Piecewise]
-
-        if e.args == ():
-            return False
-        if any([isinstance(e, func) for func in func_list]):
-            if e.has(sym):
-                return True
-        for f in e.args:
-            if any([isinstance(f, func) for func in func_list]):
-                if f.has(sym):
-                    return True
-            return any([_has_unsupported_func(g) for g in f.args])
-
-    if _has_unsupported_func(expr):
+    if not _has_only_supported_func(expr, sym):
         raise NotImplementedError("Sorry, algorithms to find infinite"
                                   " discontinuties of %s are not yet"
                                   " implemented" % expr)
@@ -56,7 +42,7 @@ def infinite_discontinuties(expr, sym):
     # check the condition for log
     expr_dict = expr.match(r*log(p) + q)
     if not expr_dict[r].is_zero:
-        pods += solve(expr_dict[p], sym)
+        pods += [soln for soln in solve(expr_dict[p], sym) if soln.is_real]
         pods += infinite_discontinuties(expr_dict[p], sym)
         pods += infinite_discontinuties(expr_dict[r], sym)
 
@@ -66,9 +52,30 @@ def infinite_discontinuties(expr, sym):
     if not expr_dict[r].is_zero:
         # exp(f) has infinite discontinuity only for f -> oo
         pods += [x for x in solve(simplify(1/expr_dict[p]), sym)
-                 if limit(expr_dict[p], sym, x) == oo]
+                 if limit(expr_dict[p], sym, x) == oo and x.is_real]
         pods += [x for x in infinite_discontinuties(expr_dict[p], sym)
-                 if limit(expr_dict[p], sym, x) == oo]
+                 if limit(expr_dict[p], sym, x) == oo and x.is_real]
         pods += infinite_discontinuties(expr_dict[r], sym)
 
     return list(set(pods))  # remove dublications
+
+
+def _basic_args(e, sym):
+    """ Returns the leaves of the sympy expression tree """
+    basic_arg_list = []
+    if isinstance(e, Add) or isinstance(e, Mul) or isinstance(e, Pow):
+        basic_arg_list += flatten([_basic_args(g, sym) for g in e.args])
+    else:
+        basic_arg_list += [e]
+    return basic_arg_list
+
+
+def _has_only_supported_func(e, sym):
+    func_list = [exp, log]
+    for f in _basic_args(e, sym):
+        if f.is_rational_function(sym):
+            return True
+        elif not any([isinstance(f, func) for func in func_list]):
+            return False
+        else:
+            return all([_has_only_supported_func(g, sym) for g in f.args])

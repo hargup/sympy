@@ -14,3 +14,6 @@ def test_infinite_disconituties():
     assert infinite_discontinuties(exp(exp(1/x)), x) == [0]
     assert infinite_discontinuties(exp(-exp(1/x)), x) == []
     assert infinite_discontinuties(1/(x - sin(2)), x) == [sin(2)]
+
+    #test if the complex solutions are not returned
+    assert infinite_discontinuties(log(x**2 + 1), x) == []
