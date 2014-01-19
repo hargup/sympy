@@ -57,7 +57,7 @@ def infinite_discontinuties(expr, sym):
                  if limit(expr_dict[p], sym, x) == oo and x.is_real]
         pods += infinite_discontinuties(expr_dict[r], sym)
 
-    return list(set(pods))  # remove dublications
+    return sorted(list(set(pods)))  # remove dublications
 
 
 def _basic_args(e, sym):
