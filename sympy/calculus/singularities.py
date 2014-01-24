@@ -72,10 +72,12 @@ def _basic_args(e, sym):
 
 def _has_only_supported_func(e, sym):
     func_list = [exp, log]
-    for f in _basic_args(e, sym):
-        if f.is_rational_function(sym):
-            return True
-        elif not any([isinstance(f, func) for func in func_list]):
-            return False
-        else:
-            return all([_has_only_supported_func(g, sym) for g in f.args])
+
+    if e.is_rational_function(sym):
+        return True
+    if not all([True] + [False for g in _basic_args(e, sym) if not
+               any([isinstance(g, func) for func in func_list])
+               and not g.is_rational_function(sym)]):
+        return False
+    else:
+        return all([_has_only_supported_func(g, sym) for g in e.args])
