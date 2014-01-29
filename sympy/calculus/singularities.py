@@ -39,25 +39,25 @@ def infinite_discontinuties(expr, sym):
     q = Wild("q")
     r = Wild("r")
 
-    # check the condition for log
     expr_dict = expr.match(r*log(p) + q)
     if not expr_dict[r].is_zero:
         pods += [soln for soln in solve(expr_dict[p], sym) if soln.is_real]
         pods += infinite_discontinuties(expr_dict[p], sym)
         pods += infinite_discontinuties(expr_dict[r], sym)
+        pods += infinite_discontinuties(expr_dict[q], sym)
 
-    # check the condition for exp
     expr = expr.rewrite(exp)
     expr_dict = expr.match(r*exp(p) + q)
     if not expr_dict[r].is_zero:
         # exp(f) has infinite discontinuity only for f -> oo
-        pods += [x for x in solve(simplify(1/expr_dict[p]), sym)
-                 if limit(expr_dict[p], sym, x) == oo and x.is_real]
         pods += [x for x in infinite_discontinuties(expr_dict[p], sym)
                  if limit(expr_dict[p], sym, x) == oo and x.is_real]
         pods += infinite_discontinuties(expr_dict[r], sym)
+        pods += infinite_discontinuties(expr_dict[q], sym)
 
-    return sorted(list(set(pods)))  # remove dublications
+    return sorted(list(set(pods)))
+
+
 
 
 def _basic_args(e, sym):

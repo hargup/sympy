@@ -8,16 +8,51 @@ def test_infinite_disconituties():
     x = Symbol('x', real=True)
 
     assert infinite_discontinuties(exp(x), x) == []
+    assert infinite_discontinuties(log(x), x) == [0]
+
+    # rational functions
+    assert infinite_discontinuties(1/x, x) == [0]
     assert infinite_discontinuties((1 + x**2)/(x - 1), x) == [1]
-    assert infinite_discontinuties(log((x - 2)**2), x) == [2]
-    assert infinite_discontinuties(exp(1/(x-2)**2), x) == [2]
-    assert infinite_discontinuties(exp(-1/(x-2)**2), x) == []
-    assert infinite_discontinuties(exp(exp(1/x)), x) == [0]
-    assert infinite_discontinuties(exp(-exp(1/x)), x) == []
+    assert infinite_discontinuties(1/(x**2 - 3*x + 2), x) == [1, 2]
+
+    # test there are no dublicate solutions
+    assert infinite_discontinuties(1/(x**2 + 2*x + 1), x) == [-1]
+
+    # test for non rational coefficients
     assert infinite_discontinuties(1/(x - sin(2)), x) == [sin(2)]
 
-    #test if the complex solutions are not returned
+    # exponentials
+    assert infinite_discontinuties(exp(1/(x - 2)**2), x) == [2]
+    assert infinite_discontinuties(exp(-1/(x - 2)**2), x) == []
+
+    # nested exponentials
+    assert infinite_discontinuties(exp(exp(1/x)), x) == [0]
+    assert infinite_discontinuties(exp(-exp(1/x)), x) == []
+
+    # exp(...)*exp(...)
+    assert infinite_discontinuties(exp(1/(x - 1))*exp(1/(x - 2)**2) + 1, x) == \
+        [1, 2]
+    assert infinite_discontinuties(exp(exp(1/x))*exp(1/(x-1)), x) == [0, 1]
+
+    # logarithmic
+    assert infinite_discontinuties(log((x - 2)**2), x) == [2]
     assert infinite_discontinuties(log(x**2 + 1), x) == []
+    assert infinite_discontinuties(log(1/(x - 2)), x) == [2]
+
+    # nested logartihmic
+    assert infinite_discontinuties(log(log(1/x**2)), x) == \
+        [-1, 0, 1]
+
+    # log(...)*log(...)
+    assert infinite_discontinuties(log(1/(x - 1)**2)*log(1/(x - 2)**2), x) == \
+        [1, 2]
+
+    # f(x) + g(x)
+    assert infinite_discontinuties(exp(1/(x - 1)) + exp(1/x), x) == [0, 1]
+    assert infinite_discontinuties(exp(1/(x - 1)) + log((x - 2)**2), x) == \
+        [1, 2]
+    assert infinite_discontinuties(exp(1/(x-1)) + 1/x, x) == [0, 1]
+    assert infinite_discontinuties(log((x-1)**2) + 1/x, x) == [0, 1]
 
 
 def test__has_only_supported_func():
