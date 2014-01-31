@@ -652,10 +652,12 @@ class Interval(Set, EvalfMixin):
         # TODO: handle multivariate functions
 
         # var and expr are being defined this way to
-        # support Python lambda
+        # support Python lambda and not just sympy Lambda
         try:
             var = Dummy()
             expr = f(var)
+            if len(expr.free_symbols) > 1:
+                raise TypeError
         except TypeError:
             raise NotImplementedError("Sorry, Multivariate imagesets are"
                                       " not yet implemented, you are welcome"
