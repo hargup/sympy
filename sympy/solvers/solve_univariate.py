@@ -1,13 +1,28 @@
 from __future__ import print_function, division
 
-from sympy.functions import (log, exp)
+from sympy.functions import (log, exp, Abs)
 from sympy.polys import (roots, Poly, degree)
 from sympy.core import S, Pow, Dummy
 from sympy.core.compatibility import (ordered)
 
 
 def invert(f, symbol):
-    """ Returns the list of the inverse function """
+    """
+    Returns the list of the inverse function
+
+    Examples
+    =========
+
+    >>> from sympy.solvers.solve_univariate import invert
+    >>> from sympy.abc import x
+    >>> from sympy import Abs, exp
+    >>> invert(Abs(x), x)
+    [-x, x]
+    >>> invert(exp(x), x)
+    [log(x)]
+    """
+    #XXX: there is already a invert function in the namespace in the
+    # polynomials module be careful.
     # We might dispach it into the functions themselves
     if f.is_Symbol:
         return [f]
@@ -17,6 +32,8 @@ def invert(f, symbol):
     if isinstance(f, log):
         return [invt.subs(symbol, exp(symbol)) for invt
                 in invert(f.args[0], symbol)]
+    if isinstance(f, Abs):
+        return [-f.args[0], f.args[0]]
     if f.is_Mul:
         # f = g*h
         g, h = f.as_independent(symbol)
@@ -36,23 +53,29 @@ def invert(f, symbol):
 
 def solve_univariate(f, symbol):
     """
-    Robust univariate equation solver
+    univariate equation solver
+
+    Examples
+    ========
+
+    >>> from sympy import solve_univariate
+    >>> from sympy.abc import x
+    >>> solve_univariate(x**2 - 1, x)
+    [-1, 1]
     """
     if f.is_Mul:
         result = set()
-        for m in f.args:
-            solns = solve_univariate(m, symbol)
-            result.update(set(solns))
+        result.update(*[solve_univariate(m, symbol) for m in f.args])
         return list(result)
     elif f.is_Function:
         if f.is_Piecewise:
-# XXX: Piecewise functions in sympy are implicitly real,
-# the conditionals greaterthan, lessthan are not defined
-# for complex valued functions do something for it.
-# also ploting for the piecewise functions doesn't work, it wll be easy
-# to implement create a issue for it.
-# TODO: write the docstring for the as_expr_set_pairs method for
-# piecewise functions
+            # XXX: Piecewise functions in sympy are implicitly real,
+            # the conditionals greaterthan, lessthan are not defined
+            # for complex valued functions do something for it.
+            # also ploting for the piecewise functions doesn't work,
+            # it wll be easy to implement. Create a issue for it.
+            # TODO: write the docstring for the as_expr_set_pairs method for
+            # piecewise functions
             result = set()
             expr_set_pairs = f.as_expr_set_pairs()
             for (expr, in_set) in expr_set_pairs:
@@ -97,23 +120,23 @@ def solve_as_poly(f, symbol):
             return NotImplementedError("x**w = c have infinitely many"
                                        " solutions if w is irrational")
         elif not expo.is_Real:
- # See Fateman's paper http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
- # For the solution for z**(w) = y,
- # where w is real
- # z = y**(1/w) for w >= 1
- # for 0 <= w < 1 y can only take the values where the argument theta follows
- # the condition -w*pi < theta <= w*pi,
- # these conditions cannot be incoperated in the invert function, and we need
- # the value of y in order to solve the equation.
- # The conditions where w is complex are more complicated.
- # XXX, TODO: we have to fix the bug in powsimp to not to simplify
- # (z**(1/w))**w to y, it works fine if w is a symbol, else it doesn't
- # e.g., we are wrongly simplifying y - (y**(1/(1 + I)))**(1 + I) as 0
+            # See Fateman's paper http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
+            # For the solution for z**(w) = y,
+            # where w is real
+            # z = y**(1/w) for w >= 1
+            # for 0 <= w < 1 y can only take the values where the argument theta follows
+            # the condition -w*pi < theta <= w*pi,
+            # these conditions cannot be incoperated in the invert function, and we need
+            # the value of y in order to solve the equation.
+            # The conditions where w is complex are more complicated.
+            # XXX, TODO: we have to fix the bug in powsimp to not to simplify
+            # (z**(1/w))**w to y, it works fine if w is a symbol, else it doesn't
+            # e.g., we are wrongly simplifying y - (y**(1/(1 + I)))**(1 + I) as 0
             return NotImplementedError
 
     if f.is_polynomial(symbol):
         solns = roots(f, symbol)
-        no_roots = sum([solns[key] for key in solns.keys()])
+        no_roots = sum(solns.values())
         if degree(f, symbol) == no_roots:
             return list(solns.keys())
         else:

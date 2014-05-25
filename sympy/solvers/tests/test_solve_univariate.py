@@ -39,10 +39,12 @@ def test_invert():
     assert invert(log(3*x), x) == [exp(x)/3]
     assert invert(log(x + 3), x) == [exp(x) - 3]
 
+    assert invert(Abs(x), x) == [-x, x]
+
 
 @XFAIL
 def test_fail_invert():
-    assert invert(x*log(x), x)
+    assert invert(x*exp(x), x) == LambertW(x)
 
 
 def test_polynomial():
