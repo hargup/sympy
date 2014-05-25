@@ -25,3 +25,5 @@ from .deutils import ode_order
 
 from .inequalities import reduce_inequalities, reduce_abs_inequality, \
     reduce_abs_inequalities, solve_poly_inequality, solve_rational_inequalities, solve_univariate_inequality
+
+from .solve_univariate import solve_univariate
