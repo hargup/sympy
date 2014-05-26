@@ -21,7 +21,7 @@ def invert(f, symbol):
     >>> invert(exp(x), x)
     [log(x)]
     """
-    #XXX: there is already a invert function in the namespace in the
+    # XXX: there is already a invert function in the namespace in the
     # polynomials module be careful.
     # We might dispach it into the functions themselves
     if f.is_Symbol:
@@ -120,18 +120,20 @@ def solve_as_poly(f, symbol):
             return NotImplementedError("x**w = c have infinitely many"
                                        " solutions if w is irrational")
         elif not expo.is_Real:
-            # See Fateman's paper http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
+            # See Fateman's paper
+            # http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
             # For the solution for z**(w) = y,
             # where w is real
             # z = y**(1/w) for w >= 1
-            # for 0 <= w < 1 y can only take the values where the argument theta follows
-            # the condition -w*pi < theta <= w*pi,
-            # these conditions cannot be incoperated in the invert function, and we need
-            # the value of y in order to solve the equation.
+            # for 0 <= w < 1 y can only take the values where the
+            # argument theta follows the condition -w*pi < theta <= w*pi,
+            # these conditions cannot be incoperated in the invert function,
+            # and we need the value of y in order to solve the equation.
             # The conditions where w is complex are more complicated.
             # XXX, TODO: we have to fix the bug in powsimp to not to simplify
-            # (z**(1/w))**w to y, it works fine if w is a symbol, else it doesn't
-            # e.g., we are wrongly simplifying y - (y**(1/(1 + I)))**(1 + I) as 0
+            # (z**(1/w))**w to y, it works fine if w is a symbol, else it
+            # doesn't e.g., we are wrongly simplifying
+            # y - (y**(1/(1 + I)))**(1 + I) as 0
             return NotImplementedError
 
     if f.is_polynomial(symbol):
@@ -166,7 +168,7 @@ def solve_as_poly(f, symbol):
                 u = Dummy()
                 inversion = invert(gen - u, symbol)
                 soln = list(ordered(set([i.subs(u, s) for i in
-                            inversion for s in soln])))
+                                         inversion for s in soln])))
             result = soln
             return result
         else:
