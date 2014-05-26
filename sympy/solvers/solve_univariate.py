@@ -41,12 +41,14 @@ def invert(f, symbol):
         # Maybe we can add the logic for lambert pattern here, better
         # create a different function for it.
         if g != S.One:
-            return [invt/g for invt in invert(h, symbol)]
+            return [invt.subs(symbol, symbol / g)
+                    for invt in invert(h, symbol)]
     if f.is_Add:
-        # f = g*h
+        # f = g + h
         g, h = f.as_independent(symbol)
         if g != S.Zero:
-            return [invt - g for invt in invert(h, symbol)]
+            return [invt.subs(symbol, symbol - g)
+                    for invt in invert(h, symbol)]
 
     raise NotImplementedError
 
