@@ -98,25 +98,23 @@ def solve_as_poly(f, symbol):
     """
     def solve_as_poly_gen_is_pow(poly):
         expo = poly.gen.args[1]
-        base = poly.gen.args[0]
-        if not base.is_Symbol:
-            # TODO: fix this, this will possibly doublicate some code
-            # from the case where gen is not Pow
-            # maybe create another function closure
-            raise NotImplementedError
         if expo.is_Rational:
             numer, denom = expo.as_numer_denom()
+            solns = roots(poly, poly.gen)
+            if len(solns) < poly.degree():
+                raise ValueError("Sympy couldn't evaluate all the "
+                                 "roots of the polynomial %s" % poly)
             if numer is S.One:
-                solns = roots(poly, poly.gen)
-                if len(solns) < poly.degree():
-                    raise ValueError("Sympy couldn't evaluate all the "
-                                     "roots of the polynomial %s" % poly)
                 return [Pow(sol, denom) for sol
                         in roots(poly, poly.gen)]
+            elif numer is - S.One:
+                return [1/Pow(sol, denom) for sol
+                        in roots(poly, poly.gen) if not sol == S.Zero]
             else:
                 # This case shouldn't arise. Why?
-                # Cases where the power is integer
-                # should have already been solved
+                # x**(2/3) should not be a generator rather, the generator
+                # shall be x**(1/3) and the 2 of the numerator should add to
+                # the degree of the polynomial
                 raise NotImplementedError
         elif expo.is_Real and not expo.if_Rational:
             return NotImplementedError("x**w = c have infinitely many"
@@ -155,7 +153,8 @@ def solve_as_poly(f, symbol):
 
         if len(gens) == 1:
             poly = Poly(poly, gens[0])
-            if poly.gen.is_Pow:
+            if poly.gen.is_Pow and poly.gen.args[0].is_Symbol:
+                # poly.gen.args[0].is_Symbol => Base of the exponent is symbol
                 return solve_as_poly_gen_is_pow(poly)
             deg = poly.degree()
             poly = Poly(poly.as_expr(), poly.gen, composite=True)
@@ -169,7 +168,7 @@ def solve_as_poly(f, symbol):
             if gen != symbol:
                 u = Dummy()
                 inversion = invert(gen - u, symbol)
-                soln = list(ordered(set([i.subs(u, s) for i in
+                soln = list(ordered(set([i.subs({u: s, symbol: 0}) for i in
                                          inversion for s in soln])))
             result = soln
             return result

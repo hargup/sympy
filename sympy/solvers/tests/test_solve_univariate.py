@@ -44,7 +44,7 @@ def test_invert():
 
 
 @XFAIL
-def test_fail_invert():
+def test_invert_lambert():
     assert invert(x * exp(x), x) == LambertW(x)
 
 
@@ -73,6 +73,11 @@ def test_polynomial():
              sqrt(1 - sqrt(a)), -sqrt(1 - sqrt(a))])
 
 
+def test_solve_rational():
+    assert solve_univariate(1/x + 1, x) == [-S.One]
+
+
+@XFAIL
 def test_no_sol():
     assert solve_univariate(4, x) == []
     assert solve_univariate(1/x, x) == []
@@ -93,6 +98,7 @@ def test_solve_polynomial_cv_1a():
     assert solve_as_poly(x ** Rational(1, 3) - 3, x) == [27]
 
 
+@XFAIL
 def test_solve_polynomial_multiple_gens():
     """
     Test for solving on equations that can be converted to a polynomial
@@ -120,29 +126,38 @@ def test_solve_polynomial_cv_1b():
         solve_as_poly(x * (x ** (S(1) / 3) - 3), x)) == set([S(0), S(27)])
 
 
+@XFAIL
 def test_highorder_poly():
-    sol = solve_univariate(x ** 6 - 2 * x + 2)
+    sol = solve_univariate(x ** 6 - 2 * x + 2, x)
     assert all(isinstance(i, RootOf) for i in sol) and len(sol) == 6
 
 
 def test_solve_univariate_rational():
     """Test solve_univariate for rational functions"""
-    assert solve_univariate((x - y ** 3) / ((y ** 2) * sqrt(1 - y ** 2)), x) == [y ** 3]
+    assert solve_univariate((x - y ** 3) / ((y ** 2) * sqrt(1 - y ** 2)), x) \
+        == [y ** 3]
 
 
+@XFAIL
 def test_issue_7228():
     assert solve_univariate(
         4 ** (2 * (x ** 2) + 2 * x) - 8, x) == [-Rational(3, 2), S.Half]
 
 
+@XFAIL
 def test_issue_7190():
     assert solve_univariate(log(x - 3) + log(x + 3), x) == [sqrt(10)]
 
 
-def test_solve_univariate_transcendental():
+def test_solve_univariate_transcendental_1():
     assert solve_univariate(exp(x) - 3, x) == [log(3)]
-    assert set(solve_univariate((a * x + b) * (exp(x) - 3), x)) == set([-b / a, log(3)])
+    assert set(solve_univariate((a * x + b) * (exp(x) - 3), x)) \
+        == set([-b / a, log(3)])
+    assert solve_univariate(log(x) - 3, x) == [exp(3)]
 
+
+@XFAIL
+def test_solve_univariate_transcendental_2():
     assert set(solve_univariate(exp(x) + exp(-x) - y, x)) in [set([
         log(y / 2 - sqrt(y ** 2 - 4) / 2),
         log(y / 2 + sqrt(y ** 2 - 4) / 2),
@@ -152,10 +167,6 @@ def test_solve_univariate_transcendental():
         set([
             log(y / 2 - sqrt((y - 2) * (y + 2)) / 2),
             log(y / 2 + sqrt((y - 2) * (y + 2)) / 2)])]
-    assert solve_univariate(exp(x) - 3, x) == [log(3)]
-    assert solve_univariate(Eq(exp(x), 3), x) == [log(3)]
-    assert solve_univariate(log(x) - 3, x) == [exp(3)]
-    assert solve_univariate(sqrt(3 * x) - 4, x) == [Rational(16, 3)]
     assert solve_univariate(3 ** (x + 2), x) == []
     assert solve_univariate(3 ** (2 - x), x) == []
     assert solve_univariate(x + 2 ** x, x) == [-LambertW(log(2)) / log(2)]
