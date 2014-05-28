@@ -26,21 +26,21 @@ from sympy.solvers.solve_univariate import solve_univariate, invert, \
 
 
 def test_invert():
-    assert invert(x + 3, x) == [x - 3]
-    assert invert(x * 3, x) == [x / 3]
+    assert invert(x + 3, x, y) == [y - 3]
+    assert invert(x * 3, x, y) == [y / 3]
 
-    assert invert(exp(x), x) == [log(x)]
-    assert invert(exp(3 * x), x) == [log(x) / 3]
-    assert invert(exp(x + 3), x) == [log(x) - 3]
+    assert invert(exp(x), x, y) == [log(y)]
+    assert invert(exp(3 * x), x, y) == [log(y) / 3]
+    assert invert(exp(x + 3), x, y) == [log(y) - 3]
 
-    assert invert(exp(x) + 3, x) == [log(x - 3)]
-    assert invert(exp(x)*3, x) == [log(x / 3)]
+    assert invert(exp(x) + 3, x, y) == [log(y - 3)]
+    assert invert(exp(x)*3, x, y) == [log(y / 3)]
 
-    assert invert(log(x), x) == [exp(x)]
-    assert invert(log(3 * x), x) == [exp(x) / 3]
-    assert invert(log(x + 3), x) == [exp(x) - 3]
+    assert invert(log(x), x, y) == [exp(y)]
+    assert invert(log(3 * x), x, y) == [exp(y) / 3]
+    assert invert(log(x + 3), x, y) == [exp(y) - 3]
 
-    assert invert(Abs(x), x) == [-x, x]
+    assert invert(Abs(x), x, y) == [-y, y]
 
 
 @XFAIL
@@ -75,6 +75,7 @@ def test_polynomial():
 
 def test_solve_rational():
     assert solve_univariate(1/x + 1, x) == [-S.One]
+    assert solve_univariate(1/exp(x) - 1, x) == [0]
 
 
 @XFAIL
