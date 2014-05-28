@@ -31,11 +31,8 @@ def _invert(f, symbol):
     # We might dispach it into the functions themselves
     if f.is_Symbol:
         return [f]
-    if isinstance(f, exp):
-        return [invt.subs(symbol, log(symbol)) for invt
-                in _invert(f.args[0], symbol)]
-    if isinstance(f, log):
-        return [invt.subs(symbol, exp(symbol)) for invt
+    if hasattr(f, 'inverse'):
+        return [invt.subs(symbol, (f.inverse())(symbol)) for invt
                 in _invert(f.args[0], symbol)]
     if isinstance(f, Abs):
         return [-f.args[0], f.args[0]]
