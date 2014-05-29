@@ -18,11 +18,18 @@ from sympy.utilities.randtest import test_numerically as tn
 from sympy.abc import a, b, c, d, k, h, p, x, y, z, t, q, m
 
 from sympy.solvers.solve_univariate import solve_univariate, invert, \
-    solve_as_poly
+    solve_as_poly, solve_as_poly_gen_is_pow
 
 # TODO: fix the pep8 error in the solvers code and the test
 # They are irritating and it is tempting to solve them along with writing the
 # code
+
+def cannot_solve(f, symbol):
+    try:
+        solve_univariate(f, symbol)
+        return False
+    except (ValueError):
+        return True
 
 
 def test_invert():
@@ -52,7 +59,6 @@ def test_polynomial():
     assert solve_univariate(3 * x - 2, x) == [Rational(2, 3)]
 
     assert set(solve_univariate(x ** 2 - 1, x)) == set([-S(1), S(1)])
-
     assert solve_univariate(x - y ** 3, x) == [y ** 3]
     assert set(solve_univariate(x - y ** 3, y)) == set([
         (-x ** Rational(1, 3)) / 2 + I * sqrt(3) * x ** Rational(1, 3) / 2,
@@ -76,6 +82,10 @@ def test_polynomial():
 def test_solve_rational():
     assert solve_univariate(1/x + 1, x) == [-S.One]
     assert solve_univariate(1/exp(x) - 1, x) == [0]
+
+
+def test_solve_as_poly_gen_is_pow():
+    assert solve_as_poly(sqrt(1) + 1, x) == []
 
 
 @XFAIL
@@ -112,11 +122,11 @@ def test_solve_polynomial_multiple_gens():
          [Rational(1, 2) - I * sqrt(3) / 2, Rational(1, 2) + I * sqrt(3) / 2]]
 
 
-@XFAIL
 def test_solve_polnomoial_irration_deg():
-    assert solve_as_poly(x ** pi - 1, x)
+    assert cannot_solve(x ** pi - 1, x)
 
 
+@XFAIL
 def test_solve_polynomial_symbolic_param():
     assert set(
         solve_as_poly(4 * x * (1 - a * sqrt(x)), x)) == set([S(0), 1 / a ** 2])
