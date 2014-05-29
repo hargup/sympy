@@ -1,8 +1,9 @@
 from __future__ import print_function, division
 
-from sympy.functions import (log, exp, Abs)
+from sympy.functions import (log, exp, Abs, arg)
 from sympy.polys import (roots, Poly, degree)
-from sympy.core import S, Pow, Dummy
+from sympy.sets import Interval
+from sympy.core import S, Pow, Dummy, pi
 from sympy.core.compatibility import (ordered)
 
 
@@ -31,11 +32,14 @@ def _invert(f, symbol):
     # We might dispach it into the functions themselves
     if f.is_Symbol:
         return [f]
+
     if hasattr(f, 'inverse'):
         return [invt.subs(symbol, (f.inverse())(symbol)) for invt
                 in _invert(f.args[0], symbol)]
+
     if isinstance(f, Abs):
         return [-f.args[0], f.args[0]]
+
     if f.is_Mul:
         # f = g*h
         g, h = f.as_independent(symbol)
@@ -45,6 +49,7 @@ def _invert(f, symbol):
         if g != S.One:
             return [invt.subs(symbol, symbol / g)
                     for invt in _invert(h, symbol)]
+
     if f.is_Add:
         # f = g + h
         g, h = f.as_independent(symbol)
@@ -95,32 +100,35 @@ def solve_univariate(f, symbol):
 
 def solve_as_poly_gen_is_pow(poly):
     """ Solve a polynomial equation where the generator is of form x**m """
-    # TODO: All of the logic of this function should be better placed in invert
-    # It will also simplify te code of solve_as_poly
+    # This cannot be placed in invert as z**w = y cannot be solved for a
+    # general y, conditions apply
 
     expo = poly.gen.args[1]
-    if expo.is_Rational:
+    if expo.is_rational:
         numer, denom = expo.as_numer_denom()
-        solns = roots(poly, poly.gen)
+        if denom != S.One:
+            solns = [soln for soln in roots(poly, poly.gen) if soln.is_constant and
+                     arg(soln) in Interval(-pi/denom, pi/denom, True, False)]
+        else:
+            solns = roots(poly, poly.gen)
         if len(solns) < poly.degree():
             raise ValueError("Sympy couldn't evaluate all the "
                              "roots of the polynomial %s" % poly)
         if numer is S.One:
-            return [Pow(sol, denom) for sol
-                    in roots(poly, poly.gen)]
+            return [Pow(sol, denom) for sol in solns]
         elif numer is - S.One:
             return [1/Pow(sol, denom) for sol
-                    in roots(poly, poly.gen) if not sol == S.Zero]
+                    in solns if not sol == S.Zero]
         else:
             # This case shouldn't arise. Why?
             # x**(2/3) should not be a generator rather, the generator
             # shall be x**(1/3) and the 2 of the numerator should add to
             # the degree of the polynomial
             raise NotImplementedError
-    elif expo.is_Real and not expo.if_Rational:
-        return NotImplementedError("x**w = c have infinitely many"
+    elif expo.is_real and not expo.is_rational:
+        raise ValueError("x**w = c have infinitely many"
                                    " solutions if w is irrational")
-    elif not expo.is_Real:
+    elif not expo.is_real:
         # See Fateman's paper
         # http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
         # For the solution for z**(w) = y,
@@ -139,6 +147,8 @@ def solve_as_poly_gen_is_pow(poly):
 
 
 def solve_as_poly(f, symbol):
+    # TODO: The use of this function is not clear to the community.
+    # Explain it propertly with examples in doctests.
     """
     Solves the equation as polynomial or converting
     it to a polynomial.
