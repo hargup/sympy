@@ -155,12 +155,13 @@ def solve_as_poly(f, symbol):
     """
 
     if f.is_polynomial(symbol):
-        solns = roots(f, symbol)
+        solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         no_roots = sum(solns.values())
         if degree(f, symbol) == no_roots:
             return list(solns.keys())
         else:
-            raise NotImplementedError
+            raise ValueError("Sympy couldn't find all the roots of the "
+                             "equation %s" % f)
     elif not f.is_Function and not f.is_Mul:
         # These conditions are taken care off in solve_univariate
         poly = Poly(f)
