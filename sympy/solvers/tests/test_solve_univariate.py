@@ -94,11 +94,18 @@ def test_no_sol_simple():
     assert solve_univariate(exp(x), x) == []
 
 
-@XFAIL
-def test_no_sol_rational():
+def test_no_sol_rational1():
     assert solve_univariate(1/x, x) == []
     assert solve_univariate(-(1 + x)/(2 + x)**2 + 1/(2 + x), x) == []
+
+
+def test_no_sol_zero():
     assert solve_univariate(-x**2 - 2*x + (x + 1)**2 - 1, x) == []
+
+@XFAIL
+def test_no_sol_rational_extragenous():
+    # Simplification is messing up with the solutions of these equations. For example
+    # for the one below a root exists for -1 but -1 is not in the domain of the function.
     assert solve_univariate((x/(x + 1) + 3)**(-2), x) == []
     assert solve_univariate((x - 1)/(1 + 1/(x - 1)), x) == []
 
@@ -383,12 +390,6 @@ def test_issue_4671_4463_4467():
         set([log(-2 + sqrt(5))/a, log(-sqrt(2) + 1)/a,
         log(-sqrt(5) - 2)/a, log(1 + sqrt(2))/a])
     assert solve_univariate(atan(x) - 1, x) == [tan(1)]
-
-
-@XFAIL
-def test_issue_5767():
-    assert set(solve_univariate(x**2 + y + 4, x)) == \
-        set([(-sqrt(-y - 4),), (sqrt(-y - 4),)])
 
 
 @XFAIL

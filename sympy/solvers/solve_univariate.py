@@ -5,9 +5,12 @@ from sympy.core import S, Pow, Dummy, pi
 from sympy.core.compatibility import (ordered)
 from sympy.core.numbers import oo, zoo
 
+from sympy.simplify.simplify import simplify, fraction
+
 from sympy.functions import (log, exp, Abs, arg)
-from sympy.polys import (roots, Poly, degree)
 from sympy.sets import Interval
+
+from sympy.polys import (roots, Poly, degree, together)
 
 from sympy.utilities.iterables import flatten
 
@@ -77,9 +80,11 @@ def solve_univariate(f, symbol):
     [1, -1]
     """
     f = sympify(f)
+    f = simplify(f)
     result = set()
+
     if not f.has(symbol):
-        result = set([])
+        result = set()
     elif f.is_Mul:
         result = set(flatten([solve_univariate(m, symbol) for m in f.args]))
     elif f.is_Function:
@@ -102,7 +107,9 @@ def solve_univariate(f, symbol):
             inversion = invert(f, symbol, v)
             result = set([i.subs({v: 0}) for i in inversion])
     else:
-        result = set(solve_as_poly(f, symbol))
+        f = together(f, deep=True)
+        g, h = fraction(f)
+        result = set(solve_as_poly(g, symbol)) - set(solve_as_poly(h, symbol))
 
     result = list(ordered([s for s in result if s not in [oo, -oo, zoo]]))
     return result
