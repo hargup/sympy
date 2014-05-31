@@ -1,11 +1,15 @@
 from __future__ import print_function, division
 
+from sympy.core.sympify import sympify
+from sympy.core import S, Pow, Dummy, pi
+from sympy.core.compatibility import (ordered)
+from sympy.core.numbers import oo, zoo
+
 from sympy.functions import (log, exp, Abs, arg)
 from sympy.polys import (roots, Poly, degree)
 from sympy.sets import Interval
-from sympy.core import S, Pow, Dummy, pi
-from sympy.core.compatibility import (ordered)
 
+from sympy.utilities.iterables import flatten
 
 def invert(f, x, y=None):
     y = y or Dummy('y')
@@ -72,10 +76,12 @@ def solve_univariate(f, symbol):
     >>> solve_univariate(x**2 - 1, x)
     [1, -1]
     """
+    f = sympify(f)
     result = set()
-    if f.is_Mul:
-        result.update(*[solve_univariate(m, symbol) for m in f.args])
-        return list(result)
+    if not f.has(symbol):
+        result = set([])
+    elif f.is_Mul:
+        result = set(flatten([solve_univariate(m, symbol) for m in f.args]))
     elif f.is_Function:
         if f.is_Piecewise:
             # XXX: Piecewise functions in sympy are implicitly real,
@@ -91,11 +97,15 @@ def solve_univariate(f, symbol):
                 solns = [s for s in solve_univariate(expr, symbol)
                          if s in in_set]
                 result.update(set(solns))
-            return list(result)
         else:
-            raise NotImplementedError
+            v = Dummy()
+            inversion = invert(f, symbol, v)
+            result = set([i.subs({v: 0}) for i in inversion])
     else:
-        return solve_as_poly(f, symbol)
+        result = set(solve_as_poly(f, symbol))
+
+    result = list(ordered([s for s in result if s not in [oo, -oo, zoo]]))
+    return result
 
 
 def solve_as_poly_gen_is_pow(poly):
