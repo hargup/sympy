@@ -18,12 +18,14 @@ from sympy.utilities.randtest import test_numerically as tn
 from sympy.abc import a, b, c, d, k, h, p, x, y, z, t, q, m
 
 from sympy.solvers.solve_univariate import solve_univariate, invert, \
-    solve_as_poly, solve_as_poly_gen_is_pow
+    solve_as_poly, solve_as_poly_gen_is_pow, subexpression_checking
 
 # TODO: fix the pep8 error in the solvers code and the test
 # They are irritating and it is tempting to solve them along with writing the
 # code
 
+def NS(e, n=15, **options):
+    return sstr(sympify(e).evalf(n, **options), full_prec=True)
 
 def cannot_solve(f, symbol):
     try:
@@ -54,6 +56,11 @@ def test_invert():
 @XFAIL
 def test_invert_lambert():
     assert invert(x*exp(x), x) == LambertW(x)
+
+
+def test_subexpression_checking():
+    assert subexpression_checking(1/(1 + (1/(x+1))**2), x, -1) is False
+    assert subexpression_checking(x**2, x, 0) is True
 
 
 def test_polynomial():
@@ -102,7 +109,7 @@ def test_no_sol_rational1():
 def test_no_sol_zero():
     assert solve_univariate(-x**2 - 2*x + (x + 1)**2 - 1, x) == []
 
-@XFAIL
+
 def test_no_sol_rational_extragenous():
     # Simplification is messing up with the solutions of these equations. For example
     # for the one below a root exists for -1 but -1 is not in the domain of the function.
@@ -129,7 +136,7 @@ def test_solve_polynomial_multiple_gens():
     """
     assert solve_as_poly(sqrt(x) + x**Rational(1, 3) +
                          x**Rational(1, 4), x) == [0]
-    assert solve_as_poly(x + 1 / x - 1, x) in \
+    assert solve_as_poly(x + 1/x - 1, x) in \
         [[Rational(1, 2) + I*sqrt(3) / 2, Rational(1, 2) - I * sqrt(3) / 2],
          [Rational(1, 2) - I*sqrt(3) / 2, Rational(1, 2) + I * sqrt(3) / 2]]
 
@@ -344,26 +351,6 @@ def test_PR1964():
 
 
 @XFAIL
-def test_issue_5197():
-    x = Symbol('x', real=True)
-    assert solve_univariate(x**2 + 1, x) == []
-    n = Symbol('n', integer=True, positive=True)
-    assert solve_univariate((n - 1)*(n + 2)*(2*n - 1), n) == [1]
-    x = Symbol('x', positive=True)
-    y = Symbol('y')
-    assert solve_univariate([x + 5*y - 2, -3*x + 6*y - 15], x, y) == []
-                 # not {x: -3, y: 1} b/c x is positive
-    # The solution following should not contain (-sqrt(2), sqrt(2))
-    assert solve_univariate((x + y)*n - y**2 + 2, x, y) == [(sqrt(2), -sqrt(2))]
-    y = Symbol('y', positive=True)
-    # The solution following should not contain {y: -x*exp(x/2)}
-    assert solve_univariate(x**2 - y**2/exp(x), y, x) == [{y: x*exp(x/2)}]
-    assert solve_univariate(x**2 - y**2/exp(x), x, y) == [{x: 2*LambertW(y/2)}]
-    x, y, z = symbols('x y z', positive=True)
-    assert solve_univariate(z**2*x**2 - z**2*y**2/exp(x), y, x, z) == [{y: x*exp(x/2)}]
-
-
-@XFAIL
 def test_issue_4671_4463_4467():
     assert solve_univariate((sqrt(x**2 - 1) - 2), x) in ([sqrt(5), -sqrt(5)],
                                            [-sqrt(5), sqrt(5)])
@@ -440,18 +427,17 @@ def test_unrad():
     assert unrad(eq - r + r2, all=True) == ans
 
 
-@slow
 @XFAIL
 def test_unrad_slow():
     ans = solve_univariate(sqrt(x) + sqrt(x + 1) -
-                sqrt(1 - x) - sqrt(2 + x))
+                sqrt(1 - x) - sqrt(2 + x), x)
     assert len(ans) == 1 and NS(ans[0])[:4] == '0.73'
     # the fence optimization problem
     # https://github.com/sympy/sympy/issues/4793#issuecomment-36994519
     F = Symbol('F')
     eq = F - (2*x + 2*y + sqrt(x**2 + y**2))
-    X = solve_univariate(eq, x, hint='minimal')[0]
-    Y = solve_univariate((x*y).subs(x, X).diff(y), y, simplify=False, minimal=True)
+    X = solve_univariate(eq, x)[0]
+    Y = solve_univariate((x*y).subs(x, X).diff(y), y)
     ans = 2*F/7 - sqrt(2)*F/14
     assert any((a - ans).expand().is_zero for a in Y)
 
@@ -505,21 +491,6 @@ def test_issue_6060():
 
     y = Symbol('y', positive=True)
     assert solve_univariate(absxm3 - y, x) == [-y + 3, y + 3]
-
-
-@XFAIL
-def test_high_order_roots():
-    s = x**5 + 4*x**3 + 3*x**2 + S(7)/4
-    assert set(solve_univariate(s, x)) == set(Poly(s*4, domain='ZZ').all_roots())
-
-
-@slow
-@XFAIL
-def test_issue_6528():
-    eqs = [
-        327600995*x**2 - 37869137*x + 1809975124*y**2 - 9998905626,
-        895613949*x**2 - 273830224*x*y + 530506983*y**2 - 10000000000]
-    assert len(solve_univariate(eqs, y, x)) == len(solve_univariate(eqs, y, x, manual=True)) == 4
 
 
 @XFAIL
@@ -688,12 +659,10 @@ def test_uselogcombine():
         -sqrt(-12 + exp(3))*exp(S(3)/2)/2 - 3 + exp(3)/2]
 
 
-@XFAIL
 def test_atan2():
     assert solve_univariate(atan2(x, 2) - pi/3, x) == [2*sqrt(3)]
 
 
-@XFAIL
 def test_errorinverses():
     assert solve_univariate(erf(x)-y,x)==[erfinv(y)]
     assert solve_univariate(erfinv(x)-y,x)==[erf(y)]
@@ -717,8 +686,7 @@ def test_issue_2725():
 
 @XFAIL
 def test_piecewise():
-    # if no symbol is given the piecewise detection must still work
-    assert solve_univariate(Piecewise((x - 2, Gt(x, 2)), (2 - x, True)) - 3) == [-1, 5]
+    assert solve_univariate(Piecewise((x - 2, Gt(x, 2)), (2 - x, True)) - 3, x) == [-1, 5]
 
 
 @XFAIL
