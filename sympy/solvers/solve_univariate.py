@@ -1,5 +1,7 @@
 from __future__ import print_function, division
 
+import copy
+
 from sympy.core.sympify import sympify
 from sympy.core import S, Pow, Dummy, pi
 from sympy.core.compatibility import (ordered)
@@ -11,6 +13,8 @@ from sympy.functions import (log, exp, Abs, arg)
 from sympy.sets import Interval
 
 from sympy.polys import (roots, Poly, degree, together)
+
+from sympy.solvers.solvers import checksol, denoms
 
 from sympy.utilities.iterables import flatten
 
@@ -67,6 +71,42 @@ def _invert(f, symbol):
     raise NotImplementedError
 
 
+def subexpression_checking(f, symbol, p):
+    """
+    Verifies if the point p is in the domain of f by checking of none of
+    the subexpression attains value infinity.
+
+    Examples
+    ========
+
+    >>> from sympy import subexpression_checking
+    >>> from sympy.abc import x
+    >>> g = 1/(1 + (1/(x+1))**2)
+    >>> subexpression_checking(g, x, -1)
+    False
+    >>> subexpression_checking(x**2, x, 0)
+    True
+    """
+    # This function relies on the assumption that the original form of
+    # the equation has not changed. A clear fail example is x/x, `x = 0` is not
+    # in the domain of the function if we are working in real number system, here x/x
+    # is not same as 1. Other example is 1/(1/(x+1))**2 is automatically simplified to
+    # (x+1)**2. One way to tackle this can be disallowing such erroneous simplifications.
+    # But not simplifying x/x to 1 doesn't feel like a good idea. The other convinient way
+    # can be operating in the extended number system where -oo, oo and zoo are treated as
+    # entinties. OK, extended reals won't solver the problem as x/x is still not one here,
+    # and then we won't be able to simplify x - x to 0 too, because oo - oo != 0. Yes, so maybe
+    # disallowing such automatic simplification is the only option
+    if f.is_Atom:
+        return True
+    else:
+        if f.subs(symbol, p) in [-oo, oo, zoo]:
+            return False
+        else:
+            return all([subexpression_checking(arg, symbol, p)
+                        for arg in f.args])
+
+
 def solve_univariate(f, symbol):
     """
     univariate equation solver
@@ -79,6 +119,7 @@ def solve_univariate(f, symbol):
     >>> solve_univariate(x**2 - 1, x)
     [1, -1]
     """
+    original_eq = copy.deepcopy(f)  # Not sure if need the deep copy
     f = sympify(f)
     f = simplify(f)
     result = set()
@@ -111,7 +152,10 @@ def solve_univariate(f, symbol):
         g, h = fraction(f)
         result = set(solve_as_poly(g, symbol)) - set(solve_as_poly(h, symbol))
 
-    result = list(ordered([s for s in result if s not in [oo, -oo, zoo]]))
+    # TODO: figure out how old solvers fixed the problem of removable discontinuties
+
+    result = [s for s in result if s not in [-oo, oo, zoo]
+              and subexpression_checking(original_eq, symbol, s)]
     return result
 
 
