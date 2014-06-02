@@ -211,8 +211,9 @@ def solve_as_poly(f, symbol):
     # TODO: The use of this function is not clear to the community.
     # Explain it propertly with examples in doctests.
     """
-    Solves the equation as polynomial or converting
-    it to a polynomial.
+    Solve the equation using techniques of solving polynomial equations.
+    That included both the polynomial equations and the equations that
+    can be converted to polynomial.
     """
 
     if f.is_polynomial(symbol):
