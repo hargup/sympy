@@ -659,10 +659,6 @@ def test_uselogcombine():
         -sqrt(-12 + exp(3))*exp(S(3)/2)/2 - 3 + exp(3)/2]
 
 
-def test_atan2():
-    assert solve_univariate(atan2(x, 2) - pi/3, x) == [2*sqrt(3)]
-
-
 def test_errorinverses():
     assert solve_univariate(erf(x)-y,x)==[erfinv(y)]
     assert solve_univariate(erfinv(x)-y,x)==[erf(y)]
