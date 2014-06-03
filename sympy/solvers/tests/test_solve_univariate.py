@@ -680,9 +680,8 @@ def test_issue_2725():
                        evaluate=False),)])
 
 
-@XFAIL
 def test_piecewise():
-    assert solve_univariate(Piecewise((x - 2, Gt(x, 2)), (2 - x, True)) - 3, x) == [-1, 5]
+    assert set(solve_univariate(Piecewise((x - 2, Gt(x, 2)), (2 - x, True)) - 3, x)) == set([-1, 5])
 
 
 @XFAIL

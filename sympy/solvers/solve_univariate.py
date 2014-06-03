@@ -94,7 +94,7 @@ def subexpression_checking(f, symbol, p):
     # (x+1)**2. One way to tackle this can be disallowing such erroneous simplifications.
     # But not simplifying x/x to 1 doesn't feel like a good idea. The other convinient way
     # can be operating in the extended number system where -oo, oo and zoo are treated as
-    # entinties. OK, extended reals won't solver the problem as x/x is still not one here,
+    # entinties. OK, extended reals won't solve the problem as x/x is still not one here,
     # and then we won't be able to simplify x - x to 0 too, because oo - oo != 0. Yes, so maybe
     # disallowing such automatic simplification is the only option
     if f.is_Atom:
