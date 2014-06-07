@@ -20,7 +20,6 @@ from sympy.abc import a, b, c, d, k, h, p, x, y, z, t, q, m
 from sympy.solvers.solve_univariate import solve_univariate, invert, \
     solve_as_poly, solve_as_poly_gen_is_pow, subexpression_checking
 
-from sympy.core.cache import clear_cache
 
 # TODO: fix the pep8 error in the solvers code and the test
 # They are irritating and it is tempting to solve them along with writing the
@@ -115,7 +114,6 @@ def test_no_sol_zero():
 def test_no_sol_rational_extragenous():
     # Simplification is messing up with the solutions of these equations. For example
     # for the one below a root exists for -1 but -1 is not in the domain of the function.
-    clear_cache()
     assert solve_univariate((x/(x + 1) + 3)**(-2), x) == []
     assert solve_univariate((x - 1)/(1 + 1/(x - 1)), x) == []
 
