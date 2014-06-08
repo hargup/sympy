@@ -1,11 +1,10 @@
 from __future__ import print_function, division
 
-import copy
-
 from sympy.core.sympify import sympify
-from sympy.core import S, Pow, Dummy, pi
+from sympy.core import S, Pow, Dummy, pi, C
 from sympy.core.compatibility import (ordered)
 from sympy.core.numbers import oo, zoo
+from sympy.core.containers import Dict
 
 from sympy.simplify.simplify import simplify, fraction
 
@@ -30,7 +29,7 @@ def _invert(f, symbol):
     Examples
     =========
 
-    >>> from sympy.solvers.solve_univariate import _invert
+    >>> from sympy.solvers.solve_univariate_real import _invert
     >>> from sympy.abc import x
     >>> from sympy import Abs, exp
     >>> _invert(Abs(x), x)
@@ -107,19 +106,22 @@ def subexpression_checking(f, symbol, p):
                         for arg in f.args])
 
 
-def solve_univariate(f, symbol):
+def solve_univariate_real(f, symbol):
+
     """
-    univariate equation solver
+    real valued univariate equation solver.
+    The function assums all the symbols are real.
 
     Examples
     ========
 
-    >>> from sympy import solve_univariate
-    >>> from sympy.abc import x
-    >>> solve_univariate(x**2 - 1, x)
+    >>> from sympy import solve_univariate_real
+    >>> x = Symbol('x', real=True)
+    >>> solve_univariate_real(x**2 - 1, x)
     [1, -1]
     """
-    original_eq = copy.deepcopy(f)  # Not sure if need the deep copy
+
+    original_eq = f
     f = sympify(f)
     f = simplify(f)
     result = set()
@@ -127,20 +129,13 @@ def solve_univariate(f, symbol):
     if not f.has(symbol):
         result = set()
     elif f.is_Mul:
-        result = set(flatten([solve_univariate(m, symbol) for m in f.args]))
+        result = set(flatten([solve_univariate_real(m, symbol) for m in f.args]))
     elif f.is_Function:
         if f.is_Piecewise:
-            # XXX: Piecewise functions in sympy are implicitly real,
-            # the conditionals greaterthan, lessthan are not defined
-            # for complex valued functions do something for it.
-            # also ploting for the piecewise functions doesn't work,
-            # it wll be easy to implement. Create a issue for it.
-            # TODO: write the docstring for the as_expr_set_pairs method for
-            # piecewise functions
             result = set()
             expr_set_pairs = f.as_expr_set_pairs()
             for (expr, in_set) in expr_set_pairs:
-                solns = [s for s in solve_univariate(expr, symbol)
+                solns = [s for s in solve_univariate_real(expr, symbol)
                          if s in in_set]
                 result.update(set(solns))
         else:
@@ -154,7 +149,7 @@ def solve_univariate(f, symbol):
 
     # TODO: figure out how old solvers fixed the problem of removable discontinuties
 
-    result = [s for s in result if s not in [-oo, oo, zoo]
+    result = [s for s in result if s not in [-oo, oo, zoo] and s.is_real is True
               and subexpression_checking(original_eq, symbol, s)]
     return result
 
@@ -186,25 +181,10 @@ def solve_as_poly_gen_is_pow(poly):
             # shall be x**(1/3) and the 2 of the numerator should add to
             # the degree of the polynomial
             raise NotImplementedError
+
     elif expo.is_real and not expo.is_rational:
         raise ValueError("x**w = c have infinitely many"
                                    " solutions if w is irrational")
-    elif not expo.is_real:
-        # See Fateman's paper
-        # http://www.cs.berkeley.edu/~fateman/papers/y=z2w.pdf
-        # For the solution for z**(w) = y,
-        # where w is real
-        # z = y**(1/w) for w >= 1
-        # for 0 <= w < 1 y can only take the values where the
-        # argument theta follows the condition -w*pi < theta <= w*pi,
-        # these conditions cannot be incoperated in the invert function,
-        # and we need the value of y in order to solve the equation.
-        # The conditions where w is complex are more complicated.
-        # XXX, TODO: we have to fix the bug in powsimp to not to simplify
-        # (z**(1/w))**w to y, it works fine if w is a symbol, else it
-        # doesn't e.g., we are wrongly simplifying
-        # y - (y**(1/(1 + I)))**(1 + I) as 0
-        return NotImplementedError
 
 
 def solve_as_poly(f, symbol):
@@ -225,7 +205,7 @@ def solve_as_poly(f, symbol):
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
     elif not f.is_Function and not f.is_Mul:
-        # These conditions are taken care off in solve_univariate
+        # These conditions are taken care off in solve_univariate_real
         poly = Poly(f)
         if poly is None:
             raise ValueError('could not convert %s to Poly' % f)
@@ -265,5 +245,5 @@ def solve_as_poly(f, symbol):
         else:
             raise NotImplementedError
     else:
-        return solve_univariate(f, symbol)
+        return solve_univariate_real(f, symbol)
     raise NotImplementedError
