@@ -86,8 +86,7 @@ def test_polynomial():
     assert set(solve_univariate_real(x**3 - 15*x - 4, x)) == set([
         -2 + 3 ** Rational(1, 2),
         S(4),
-        -2 - 3 ** Rational(1, 2)
-    ])
+        -2 - 3 ** Rational(1, 2)])
 
 
 def test_solve_rational():
@@ -252,8 +251,8 @@ def test_piecewise():
 
 def test_solve_univariate_complex_polynomial():
     from sympy.abc import x, a, b, c
-    assert solve_univariate_complex(a*x**2 + b*x + c, x) == \
-            [-b/(2*a) - sqrt(-4*a*c + b**2)/(2*a), -b/(2*a) + sqrt(-4*a*c + b**2)/(2*a)]
+    assert set(solve_univariate_complex(a*x**2 + b*x + c, x)) == \
+            set([-b/(2*a) - sqrt(-4*a*c + b**2)/(2*a), -b/(2*a) + sqrt(-4*a*c + b**2)/(2*a)])
 
 
 @XFAIL
