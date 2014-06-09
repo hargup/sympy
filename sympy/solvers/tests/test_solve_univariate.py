@@ -44,6 +44,7 @@ def cannot_solve(f, symbol):
 
 
 def test_invert():
+    x = Symbol('x', real= True)
     assert invert(x + 3, x, y) == [y - 3]
     assert invert(x*3, x, y) == [y / 3]
 
@@ -59,6 +60,22 @@ def test_invert():
     assert invert(log(x + 3), x, y) == [exp(y) - 3]
 
     assert invert(Abs(x), x, y) == [-y, y]
+
+    assert invert(2**x, x, y) == [log(y)/log(2)]
+    assert invert(2**exp(x), x, y) == [log(log(y)/log(2))]
+
+    assert invert(x**2, x, y) == [sqrt(y), -sqrt(y)]
+    assert invert(x**Rational(1, 2), x, y) == [y**2]
+
+    x = Symbol('x', positive = True)
+    assert invert(x**pi, x, y) == [y**(1/pi)]
+
+    # TODO: write a test which test if invert(x**pi, x, y)
+    # raises a value error when x is not positive
+    # For this write a generalised function which will test if
+    # a given expression raise the value error. You will probably
+    # have to use decorators. Then replace the ussage of cannot_solve
+    # with that function
 
 
 @XFAIL
@@ -84,10 +101,6 @@ def test_polynomial():
         S(4),
         -2 - 3 ** Rational(1, 2)
     ])
-
-    # assert set(solve_univariate_real((x**2 - 1)**2 - a, x)) == \
-    #     set([sqrt(1 + sqrt(a)), -sqrt(1 + sqrt(a)),
-    #          sqrt(1 - sqrt(a)), -sqrt(1 - sqrt(a))])
 
 
 def test_solve_rational():
@@ -133,15 +146,8 @@ def test_solve_polynomial_cv_1a():
 
 @XFAIL
 def test_solve_polynomial_multiple_gens():
-    """
-    Test for solving on equations that can be converted to a polynomial
-    equation multiplying both sides of the equation by x**m
-    """
     assert solve_as_poly(sqrt(x) + x**Rational(1, 3) +
                          x**Rational(1, 4), x) == [0]
-    assert solve_as_poly(x + 1/x - 1, x) in \
-        [[Rational(1, 2) + I*sqrt(3) / 2, Rational(1, 2) - I * sqrt(3) / 2],
-         [Rational(1, 2) - I*sqrt(3) / 2, Rational(1, 2) + I * sqrt(3) / 2]]
 
 
 def test_solve_polnomoial_irration_deg():
@@ -150,6 +156,12 @@ def test_solve_polnomoial_irration_deg():
 
 @XFAIL
 def test_solve_polynomial_symbolic_param():
+    a = Symbol('a', positive=True)
+
+    assert set(solve_univariate_real((x**2 - 1)**2 - a, x)) == \
+        set([sqrt(1 + sqrt(a)), -sqrt(1 + sqrt(a)),
+             sqrt(1 - sqrt(a)), -sqrt(1 - sqrt(a))])
+
     assert set(
         solve_as_poly(4 *x*(1 - a * sqrt(x)), x)) == set([S(0), 1 / a ** 2])
 
@@ -167,8 +179,10 @@ def test_solve_univariate_real_rational():
 
 @XFAIL
 def test_issue_7228():
-    assert solve_univariate_real(
-        4**(2*(x**2) + 2*x) - 8, x) == [-Rational(3, 2), S.Half]
+    # In theory this test should have been passed, but the Poly function screws it up.
+    # It creates two generators out of it but spliting 4**(a + b) to 4**a*4**b
+    assert solve_univariate_real( 4**(2*(x**2) + 2*x) - 8, x) == \
+            [-Rational(3, 2), S.Half]
 
 
 @XFAIL
@@ -283,15 +297,28 @@ def test_solve_univariate_real_transcendental_2():
     raises(NotImplementedError, lambda: solve_univariate_real((x + 2) ** y * x - 3, x))
 
 
-@XFAIL
-def test_issue_4793():
+def test_issue_4793_1():
     assert solve_univariate_real(x*(1 - 5/x), x) == [5]
-    assert solve_univariate_real(x + sqrt(x) - 2, x) == [1]
     assert solve_univariate_real(-(1 + x)/(2 + x)**2 + 1/(2 + x), x) == []
     assert solve_univariate_real(-x**2 - 2*x + (x + 1)**2 - 1, x) == []
     assert solve_univariate_real((x/(x + 1) + 3)**(-2), x) == []
     assert solve_univariate_real(x/sqrt(x**2 + 1), x) == [0]
+
+    y = Symbol('y', real=True)
+    assert solve_univariate_real(exp(x) - y, x) == []
+
+    y = Symbol('y', positive=True)
     assert solve_univariate_real(exp(x) - y, x) == [log(y)]
+
+
+@XFAIL
+def test_issue_4793_2():
+    assert solve_univariate_real(x + sqrt(x) - 2, x) == [1]
+    # I don't know underwhat general techniques this will fit. First I though of rewriting
+    # x as sqrt(x)**2 but sqrt(x)**2 is multivalued with values x and -x so the equation
+    # is basically this equation is a set of two equations.
+
+
     assert solve_univariate_real(x**2 + x + sin(y)**2 + cos(y)**2 - 1, x) in [[0, -1], [-1, 0]]
     eq = 4*3**(5*x + 2) - 7
     ans = solve_univariate_real(eq, x)
@@ -546,13 +573,6 @@ def test_issues_6819_6820_6821_6248():
 
     x = symbols('x')
     assert solve_univariate_real(2**x + 4**x) == [I*pi/log(2)]
-
-
-@XFAIL
-def test_issue_6989():
-    f = Function('f')
-    assert solve_univariate_real(Eq(-f(x), Piecewise((1, x > 0), (0, True))), f(x)) == \
-        [Piecewise((-1, x > 0), (0, True))]
 
 
 @XFAIL

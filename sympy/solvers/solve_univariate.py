@@ -40,6 +40,9 @@ def _invert(f, symbol):
     # XXX: there is already a _invert function in the namespace in the
     # polynomials module be careful.
     # We might dispach it into the functions themselves
+    if not f.has(symbol):
+        raise ValueError("Inverse of constant function doesn't exist")
+
     if f.is_Symbol:
         return [f]
 
@@ -66,6 +69,39 @@ def _invert(f, symbol):
         if g != S.Zero:
             return [invt.subs(symbol, symbol - g)
                     for invt in _invert(h, symbol)]
+
+    if f.is_Pow:
+        base, expo = f.args
+        base_has_sym = base.has(symbol)
+        expo_has_sym = expo.has(symbol)
+
+        if not expo_has_sym:
+            if expo.is_rational:
+                numer, denom = expo.as_numer_denom()
+                if numer == S.One or numer == - S.One:
+                    return [invt.subs(symbol, Pow(symbol, 1/expo)) for invt
+                            in _invert(base, symbol)]
+                else:
+                    pos_res = [invt.subs(symbol, Pow(symbol, 1/expo)) for invt
+                               in _invert(base, symbol)]
+
+                    if numer %2 == 0:
+                        neg_res = [-invt.subs(symbol, Pow(symbol, 1/expo)) for invt
+                                   in _invert(base, symbol)]
+                        return pos_res + neg_res
+                    else:
+                        return pos_res
+            else:
+                if not base.is_positive:
+                    raise ValueError("x**w where w is irrational is not defined"
+                                     " for negative x")
+                return [invt.subs(symbol, Pow(symbol, 1/expo)) for invt
+                        in _invert(base, symbol)]
+
+        if not base_has_sym:
+            return [invt.subs(symbol, log(symbol)/log(base)) for invt
+                    in _invert(expo, symbol)]
+
 
     raise NotImplementedError
 
@@ -107,7 +143,6 @@ def subexpression_checking(f, symbol, p):
 
 
 def solve_univariate_real(f, symbol):
-
     """
     real valued univariate equation solver.
     The function assums all the symbols are real.
@@ -145,51 +180,17 @@ def solve_univariate_real(f, symbol):
     else:
         f = together(f, deep=True)
         g, h = fraction(f)
-        result = set(solve_as_poly(g, symbol)) - set(solve_as_poly(h, symbol))
-
-    # TODO: figure out how old solvers fixed the problem of removable discontinuties
+        if not h.has(symbol):
+            result = solve_as_poly(g, symbol)
+        else:
+            result = set(solve_univariate_real(g, symbol)) - set(solve_univariate_real(h, symbol))
 
     result = [s for s in result if s not in [-oo, oo, zoo] and s.is_real is True
               and subexpression_checking(original_eq, symbol, s)]
     return result
 
 
-def solve_as_poly_gen_is_pow(poly):
-    """ Solve a polynomial equation where the generator is of form x**m """
-    # This cannot be placed in invert as z**w = y cannot be solved for a
-    # general y, conditions apply
-
-    expo = poly.gen.args[1]
-    if expo.is_rational:
-        numer, denom = expo.as_numer_denom()
-        if denom != S.One:
-            solns = [soln for soln in roots(poly, poly.gen) if soln.is_constant and
-                     arg(soln) in Interval(-pi/denom, pi/denom, True, False)]
-        else:
-            solns = roots(poly, poly.gen)
-        if len(solns) < poly.degree():
-            raise ValueError("Sympy couldn't evaluate all the "
-                             "roots of the polynomial %s" % poly)
-        if numer is S.One:
-            return [Pow(sol, denom) for sol in solns]
-        elif numer is - S.One:
-            return [1/Pow(sol, denom) for sol
-                    in solns if not sol == S.Zero]
-        else:
-            # This case shouldn't arise. Why?
-            # x**(2/3) should not be a generator rather, the generator
-            # shall be x**(1/3) and the 2 of the numerator should add to
-            # the degree of the polynomial
-            raise NotImplementedError
-
-    elif expo.is_real and not expo.is_rational:
-        raise ValueError("x**w = c have infinitely many"
-                                   " solutions if w is irrational")
-
-
 def solve_as_poly(f, symbol):
-    # TODO: The use of this function is not clear to the community.
-    # Explain it propertly with examples in doctests.
     """
     Solve the equation using techniques of solving polynomial equations.
     That included both the polynomial equations and the equations that
@@ -215,31 +216,20 @@ def solve_as_poly(f, symbol):
         if len(gens) == 1:
             poly = Poly(poly, gens[0])
             gen = poly.gen
-            if poly.gen.is_Pow:
-                # XXX: clean this up, we don't need it.
-                soln = solve_as_poly_gen_is_pow(poly)
-                gen_base = gen.args[0]
-                if gen_base != symbol:
-                    u = Dummy()
-                    v = Dummy()
-                    inversion = invert(gen - u, symbol, v)
-                    soln = list(ordered(set([i.subs({u: s, v: 0}) for i in
-                                             inversion for s in soln])))
-            else:
-                deg = poly.degree()
-                poly = Poly(poly.as_expr(), poly.gen, composite=True)
-                soln = list(roots(poly, cubics=True, quartics=True,
-                                  quintics=True).keys())
+            deg = poly.degree()
+            poly = Poly(poly.as_expr(), poly.gen, composite=True)
+            soln = list(roots(poly, cubics=True, quartics=True,
+                              quintics=True).keys())
 
-                if len(soln) < deg:
-                    raise ValueError('Couldn\'t find all the roots of'
-                                     'the equation %s' % f)
-                if gen != symbol:
-                    u = Dummy()
-                    v = Dummy()
-                    inversion = invert(gen - u, symbol, v)
-                    soln = list(ordered(set([i.subs({u: s, v: 0}) for i in
-                                             inversion for s in soln])))
+            if len(soln) < deg:
+                raise ValueError('Couldn\'t find all the roots of'
+                                 'the equation %s' % f)
+            if gen != symbol:
+                u = Dummy()
+                v = Dummy()
+                inversion = invert(gen - u, symbol, v)
+                soln = list(ordered(set([i.subs({u: s, v: 0}) for i in
+                                         inversion for s in soln])))
             result = soln
             return result
         else:
