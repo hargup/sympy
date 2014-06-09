@@ -34,16 +34,6 @@ from sympy.solvers import solve
 # They are irritating and it is tempting to solve them along with writing the
 # code
 
-def NS(e, n=15, **options):
-    return sstr(sympify(e).evalf(n, **options), full_prec=True)
-
-def cannot_solve(f, symbol):
-    try:
-        solve_univariate_real(f, symbol)
-        return False
-    except (ValueError):
-        return True
-
 
 def test_invert():
     x = Symbol('x', real= True)
@@ -69,15 +59,10 @@ def test_invert():
     assert invert(x**2, x, y) == [sqrt(y), -sqrt(y)]
     assert invert(x**Rational(1, 2), x, y) == [y**2]
 
+    raises(ValueError, lambda: invert(x**pi, x, y))
+
     x = Symbol('x', positive = True)
     assert invert(x**pi, x, y) == [y**(1/pi)]
-
-    # TODO: write a test which test if invert(x**pi, x, y)
-    # raises a value error when x is not positive
-    # For this write a generalised function which will test if
-    # a given expression raise the value error. You will probably
-    # have to use decorators. Then replace the ussage of cannot_solve
-    # with that function
 
 
 @XFAIL
@@ -152,8 +137,9 @@ def test_solve_polynomial_multiple_gens():
                          x**Rational(1, 4), x) == [0]
 
 
+@XFAIL
 def test_solve_polnomoial_irration_deg():
-    assert cannot_solve(x**pi - 1, x)
+    assert solve_univariate_real(x**pi - 1, x) == 1
 
 
 @XFAIL
@@ -281,6 +267,7 @@ def test_solve_univariate_complex_rational():
     # for test for mathematical equivalence rather than structural equivalence
 
 
+@XFAIL
 def test_solve_univariate_complex_log():
     from sympy.abc import x
     eq = 4*3**(5*x + 2) - 7
