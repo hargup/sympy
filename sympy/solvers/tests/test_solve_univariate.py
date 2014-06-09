@@ -25,7 +25,7 @@ q = Symbol('q', real=True)
 m = Symbol('m', real=True)
 
 from sympy.solvers.solve_univariate import solve_univariate_real, invert, \
-    solve_as_poly, solve_as_poly_gen_is_pow, subexpression_checking
+    solve_as_poly, subexpression_checking, solve_univariate_complex
 
 
 # TODO: fix the pep8 error in the solvers code and the test
@@ -718,3 +718,20 @@ def test_real_imag_splitting():
 def test_issue_7110():
     y = -2*x**3 + 4*x**2 - 2*x + 5
     assert any(ask(Q.real(i)) for i in solve_univariate_real(y))
+
+
+def test_solve_univariate_complex_polynomial():
+    from sympy.abc import x, a, b, c
+    assert solve_univariate_complex(a*x**2 + b*x + c, x) == \
+            [-b/(2*a) - sqrt(-4*a*c + b**2)/(2*a), -b/(2*a) + sqrt(-4*a*c + b**2)/(2*a)]
+
+
+@XFAIL
+def test_solve_univariate_complex_rational():
+    from sympy.abc import x, a, b, c
+    assert solve_univariate_complex((x - 1)*(x - I)/(x - 3), x) == [1, I]
+    # The test is failing because roots return the solutions in a particularly
+    # complex form. The answer given by it is
+    # [1/2 + I/2 - sqrt(2)*sqrt(-I)/2, 1/2 + sqrt(2)*sqrt(-I)/2 + I/2]
+    # either I have to simplify the output of the solve
+    # for test for mathematical equivalence rather than structural equivalence
