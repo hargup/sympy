@@ -24,7 +24,7 @@ def invert(f, x, y=None):
 
 def _invert(f, symbol):
     """
-    Returns the list of the inverse function
+    Returns the list of the inverse function for given real valued function
 
     Examples
     =========
@@ -237,3 +237,25 @@ def solve_as_poly(f, symbol):
     else:
         return solve_univariate_real(f, symbol)
     raise NotImplementedError
+
+
+def solve_univariate_complex(f, symbol):
+    """
+    Solves the given univariate equation where the variable
+    is a complex number
+    """
+    if f.is_polynomial(symbol):
+        solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
+        no_roots = sum(solns.values())
+        if degree(f, symbol) == no_roots:
+            return list(solns.keys())
+        else:
+            raise ValueError("Sympy couldn't find all the roots of the "
+                             "equation %s" % f)
+    else:
+         f = together(f, deep=True)
+         g, h = fraction(f)
+         if g.is_polynomial(symbol) and h.is_polynomial(symbol):
+             result = set(solve_univariate_complex(g, symbol)) - set(solve_univariate_complex(h, symbol))
+             return list(result)
+    raise NotImplementedError('The algorithms for solving %s are implemened' % f)
