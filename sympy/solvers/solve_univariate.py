@@ -8,7 +8,7 @@ from sympy.core.containers import Dict
 
 from sympy.simplify.simplify import simplify, fraction
 
-from sympy.functions import (log, exp, Abs, arg)
+from sympy.functions import (log, Abs)
 from sympy.sets import Interval
 
 from sympy.polys import (roots, Poly, degree, together)
@@ -135,7 +135,7 @@ def subexpression_checking(f, symbol, p):
     if f.is_Atom:
         return True
     else:
-        if f.subs(symbol, p) in [-oo, oo, zoo]:
+        if f.subs(symbol, p).is_unbounded:
             return False
         else:
             return all([subexpression_checking(arg, symbol, p)
@@ -199,8 +199,8 @@ def solve_as_poly(f, symbol):
 
     if f.is_polynomial(symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
-        no_roots = sum(solns.values())
-        if degree(f, symbol) == no_roots:
+        num_roots = sum(solns.values())
+        if degree(f, symbol) == num_roots:
             return list(solns.keys())
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
@@ -210,7 +210,6 @@ def solve_as_poly(f, symbol):
         poly = Poly(f)
         if poly is None:
             raise ValueError('could not convert %s to Poly' % f)
-            # Shouldn't it be NotImplementedError
         gens = [g for g in poly.gens if g.has(symbol)]
 
         if len(gens) == 1:
