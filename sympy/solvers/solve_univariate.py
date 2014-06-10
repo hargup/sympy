@@ -9,7 +9,7 @@ from sympy.core.containers import Dict
 from sympy.simplify.simplify import simplify, fraction
 
 from sympy.functions import (log, Abs)
-from sympy.sets import Interval
+from sympy.sets import Interval, FiniteSet, EmptySet
 
 from sympy.polys import (roots, Poly, degree, together)
 
@@ -153,41 +153,41 @@ def solve_univariate_real(f, symbol):
     >>> from sympy import solve_univariate_real
     >>> x = Symbol('x', real=True)
     >>> solve_univariate_real(x**2 - 1, x)
-    [1, -1]
+    {1, -1}
     """
 
     original_eq = f
     f = sympify(f)
     f = simplify(f)
-    result = set()
+    result = EmptySet()
 
     if not f.has(symbol):
-        result = set()
+        return EmptySet()
     elif f.is_Mul:
-        result = set(flatten([solve_univariate_real(m, symbol) for m in f.args]))
+        result = FiniteSet(flatten([list(solve_univariate_real(m, symbol)) for m in f.args]))
     elif f.is_Function:
         if f.is_Piecewise:
-            result = set()
+            result = EmptySet()
             expr_set_pairs = f.as_expr_set_pairs()
             for (expr, in_set) in expr_set_pairs:
                 solns = [s for s in solve_univariate_real(expr, symbol)
                          if s in in_set]
-                result.update(set(solns))
+                result = result + FiniteSet(solns)
         else:
             v = Dummy()
             inversion = invert(f, symbol, v)
-            result = set([i.subs({v: 0}) for i in inversion])
+            result = FiniteSet([i.subs({v: 0}) for i in inversion])
     else:
         f = together(f, deep=True)
         g, h = fraction(f)
         if not h.has(symbol):
             result = solve_as_poly(g, symbol)
         else:
-            result = set(solve_univariate_real(g, symbol)) - set(solve_univariate_real(h, symbol))
+            result = solve_univariate_real(g, symbol) - solve_univariate_real(h, symbol)
 
     result = [s for s in result if s not in [-oo, oo, zoo] and s.is_real is True
               and domain_check(original_eq, symbol, s)]
-    return result
+    return FiniteSet(result)
 
 
 def solve_as_poly(f, symbol):
@@ -201,7 +201,7 @@ def solve_as_poly(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         num_roots = sum(solns.values())
         if degree(f, symbol) == num_roots:
-            return list(solns.keys())
+            return FiniteSet(list(solns.keys()))
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
@@ -230,7 +230,7 @@ def solve_as_poly(f, symbol):
                 soln = list(ordered(set([i.subs({u: s, v: 0}) for i in
                                          inversion for s in soln])))
             result = soln
-            return result
+            return FiniteSet(result)
         else:
             raise NotImplementedError
     else:
@@ -247,7 +247,7 @@ def solve_univariate_complex(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         no_roots = sum(solns.values())
         if degree(f, symbol) == no_roots:
-            return list(solns.keys())
+            return FiniteSet(list(solns.keys()))
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
@@ -255,6 +255,6 @@ def solve_univariate_complex(f, symbol):
          f = together(f, deep=True)
          g, h = fraction(f)
          if g.is_polynomial(symbol) and h.is_polynomial(symbol):
-             result = set(solve_univariate_complex(g, symbol)) - set(solve_univariate_complex(h, symbol))
-             return list(result)
+             result = solve_univariate_complex(g, symbol) - solve_univariate_complex(h, symbol)
+             return result
     raise NotImplementedError('The algorithms for solving %s are implemened' % f)
