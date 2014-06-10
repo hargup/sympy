@@ -164,7 +164,7 @@ def solve_univariate_real(f, symbol):
     if not f.has(symbol):
         return EmptySet()
     elif f.is_Mul:
-        result = FiniteSet(flatten([list(solve_univariate_real(m, symbol)) for m in f.args]))
+        result = FiniteSet(*flatten([list(solve_univariate_real(m, symbol)) for m in f.args]))
     elif f.is_Function:
         if f.is_Piecewise:
             result = EmptySet()
@@ -176,7 +176,7 @@ def solve_univariate_real(f, symbol):
         else:
             v = Dummy()
             inversion = invert(f, symbol, v)
-            result = FiniteSet([i.subs({v: 0}) for i in inversion])
+            result = FiniteSet(*[i.subs({v: 0}) for i in inversion])
     else:
         f = together(f, deep=True)
         g, h = fraction(f)
@@ -201,7 +201,7 @@ def solve_as_poly(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         num_roots = sum(solns.values())
         if degree(f, symbol) == num_roots:
-            return FiniteSet(list(solns.keys()))
+            return FiniteSet(*list(solns.keys()))
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
@@ -217,8 +217,8 @@ def solve_as_poly(f, symbol):
             gen = poly.gen
             deg = poly.degree()
             poly = Poly(poly.as_expr(), poly.gen, composite=True)
-            soln = list(roots(poly, cubics=True, quartics=True,
-                              quintics=True).keys())
+            soln = FiniteSet(*list(roots(poly, cubics=True, quartics=True,
+                              quintics=True).keys()))
 
             if len(soln) < deg:
                 raise ValueError('Couldn\'t find all the roots of'
@@ -227,8 +227,8 @@ def solve_as_poly(f, symbol):
                 u = Dummy()
                 v = Dummy()
                 inversion = invert(gen - u, symbol, v)
-                soln = list(ordered(set([i.subs({u: s, v: 0}) for i in
-                                         inversion for s in soln])))
+                soln = FiniteSet(*[i.subs({u: s, v: 0}) for i in
+                                         inversion for s in soln])
             result = soln
             return FiniteSet(result)
         else:
@@ -247,7 +247,7 @@ def solve_univariate_complex(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         no_roots = sum(solns.values())
         if degree(f, symbol) == no_roots:
-            return FiniteSet(list(solns.keys()))
+            return FiniteSet(*list(solns.keys()))
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
