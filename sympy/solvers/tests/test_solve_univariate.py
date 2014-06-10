@@ -25,7 +25,7 @@ q = Symbol('q', real=True)
 m = Symbol('m', real=True)
 
 from sympy.solvers.solve_univariate import solve_univariate_real, invert, \
-    solve_as_poly, subexpression_checking, solve_univariate_complex
+    solve_as_poly, domain_check, solve_univariate_complex
 
 from sympy.solvers import solve
 
@@ -70,9 +70,9 @@ def test_invert_lambert():
     assert invert(x*exp(x), x) == LambertW(x)
 
 
-def test_subexpression_checking():
-    assert subexpression_checking(1/(1 + (1/(x+1))**2), x, -1) is False
-    assert subexpression_checking(x**2, x, 0) is True
+def test_domain_check():
+    assert domain_check(1/(1 + (1/(x+1))**2), x, -1) is False
+    assert domain_check(x**2, x, 0) is True
 
 
 def test_polynomial():

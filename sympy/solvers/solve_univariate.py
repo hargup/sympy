@@ -106,20 +106,20 @@ def _invert(f, symbol):
     raise NotImplementedError
 
 
-def subexpression_checking(f, symbol, p):
+def domain_check(f, symbol, p):
     """
-    Verifies if the point p is in the domain of f by checking of none of
-    the subexpression attains value infinity.
+    Verifies if the point p is in the domain of f by checking any of
+    the subexpression doesn't go unbounded.
 
     Examples
     ========
 
-    >>> from sympy import subexpression_checking
+    >>> from sympy import domain_check
     >>> from sympy.abc import x
     >>> g = 1/(1 + (1/(x+1))**2)
-    >>> subexpression_checking(g, x, -1)
+    >>> domain_check(g, x, -1)
     False
-    >>> subexpression_checking(x**2, x, 0)
+    >>> domain_check(x**2, x, 0)
     True
     """
     # This function relies on the assumption that the original form of
@@ -138,7 +138,7 @@ def subexpression_checking(f, symbol, p):
         if f.subs(symbol, p).is_unbounded:
             return False
         else:
-            return all([subexpression_checking(arg, symbol, p)
+            return all([domain_check(arg, symbol, p)
                         for arg in f.args])
 
 
@@ -186,7 +186,7 @@ def solve_univariate_real(f, symbol):
             result = set(solve_univariate_real(g, symbol)) - set(solve_univariate_real(h, symbol))
 
     result = [s for s in result if s not in [-oo, oo, zoo] and s.is_real is True
-              and subexpression_checking(original_eq, symbol, s)]
+              and domain_check(original_eq, symbol, s)]
     return result
 
 
