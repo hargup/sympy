@@ -201,7 +201,7 @@ def solve_as_poly(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         num_roots = sum(solns.values())
         if degree(f, symbol) == num_roots:
-            return FiniteSet(*list(solns.keys()))
+            return FiniteSet(*solns.keys())
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
@@ -217,8 +217,8 @@ def solve_as_poly(f, symbol):
             gen = poly.gen
             deg = poly.degree()
             poly = Poly(poly.as_expr(), poly.gen, composite=True)
-            soln = FiniteSet(*list(roots(poly, cubics=True, quartics=True,
-                              quintics=True).keys()))
+            soln = FiniteSet(*roots(poly, cubics=True, quartics=True,
+                              quintics=True).keys())
 
             if len(soln) < deg:
                 raise ValueError('Couldn\'t find all the roots of'
@@ -247,7 +247,7 @@ def solve_univariate_complex(f, symbol):
         solns = roots(f, symbol, cubics=True, quartics=True, quintics=True)
         no_roots = sum(solns.values())
         if degree(f, symbol) == no_roots:
-            return FiniteSet(*list(solns.keys()))
+            return FiniteSet(*solns.keys())
         else:
             raise ValueError("Sympy couldn't find all the roots of the "
                              "equation %s" % f)
