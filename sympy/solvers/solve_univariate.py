@@ -183,9 +183,10 @@ def solve_univariate_real(f, symbol):
         if not h.has(symbol):
             result = solve_as_poly(g, symbol)
         else:
-            result = solve_univariate_real(g, symbol) - solve_univariate_real(h, symbol)
+            result = solve_univariate_real(g, symbol) - \
+                    solve_univariate_real(h, symbol)
 
-    result = [s for s in result if s.is_bounded and s.is_real is True
+    result = [s for s in result if s.is_bounded is not False and s.is_real is True
               and domain_check(original_eq, symbol, s)]
     return FiniteSet(result)
 
