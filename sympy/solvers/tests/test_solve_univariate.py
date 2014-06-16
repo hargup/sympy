@@ -1,10 +1,10 @@
 from sympy import (
     Abs, And, Derivative, Dummy, Eq, Float, Function, Gt, I, Integral,
-    LambertW, Lt, Matrix, Or, Piecewise, Poly, Q, Rational, S, Symbol,
-    Wild, acos, asin, atan, atanh, cos, cosh, diff, erf, erfinv, erfc,
-    erfcinv, erf2, erf2inv, exp, expand, im, log, pi, re, sec, sin,
-    sinh, sqrt, sstr, symbols, sympify, tan, tanh,
-    simplify, atan2, arg, Mul, SparseMatrix, ask)
+    LambertW, Lt, Matrix, Or, Piecewise, Poly, Q, Rational, S, Symbol, Wild,
+    acos, asin, atan, atanh, cos, cosh, diff, erf, erfinv, erfc, erfcinv, erf2,
+    erf2inv, exp, expand, im, log, pi, re, sec, sin, sinh, sqrt, sstr, symbols,
+    sympify, tan, tanh, simplify, atan2, arg, Mul, SparseMatrix, ask, tan,
+    Lambda, imageset)
 
 from sympy.core.function import nfloat
 from sympy.solvers.solvers import _invert, unrad, checksol, posify, _ispow, \
@@ -65,6 +65,17 @@ def test_invert():
 
     x = Symbol('x', positive = True)
     assert invert(x**pi, x, y) == FiniteSet(y**(1/pi))
+
+
+def test_invert_tan():
+    from sympy.abc import x, y, n
+    raises(NotImplementedError, lambda: invert(tan(sin(x)), x))
+
+    assert invert(tan(x), x, y) == \
+            imageset(Lambda(n, n*pi + atan(y)), S.Integers)
+    assert invert(tan(exp(x), x, y)) == \
+                  imageset(Lambda(n, log(n*pi + atan(y))), S.Integers)
+
 
 
 @XFAIL
