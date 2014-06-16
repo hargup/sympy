@@ -5,11 +5,12 @@ from sympy.core import S, Pow, Dummy, pi, C
 from sympy.core.compatibility import (ordered)
 from sympy.core.numbers import oo, zoo
 from sympy.core.containers import Dict
+from sympy.core.function import Lambda
 
 from sympy.simplify.simplify import simplify, fraction
 
 from sympy.functions import (log, Abs)
-from sympy.sets import Interval, FiniteSet, EmptySet
+from sympy.sets import Interval, FiniteSet, EmptySet, imageset
 
 from sympy.polys import (roots, Poly, degree, together)
 
@@ -47,8 +48,7 @@ def _invert(f, symbol):
         return FiniteSet(f)
 
     if hasattr(f, 'inverse'):
-        return FiniteSet(*[invt.subs(symbol, (f.inverse())(symbol)) for invt
-                           in _invert(f.args[0], symbol)])
+        return _invert(f.args[0], symbol).subs(symbol, f.inverse()(symbol))
 
     if isinstance(f, Abs):
         return FiniteSet(-f.args[0], f.args[0])
@@ -60,15 +60,13 @@ def _invert(f, symbol):
         # Maybe we can add the logic for lambert pattern here, better
         # create a different function for it.
         if g != S.One:
-            return FiniteSet(*[invt.subs(symbol, symbol / g)
-                               for invt in _invert(h, symbol)])
+            return _invert(h, symbol).subs(symbol, symbol/g)
 
     if f.is_Add:
         # f = g + h
         g, h = f.as_independent(symbol)
         if g != S.Zero:
-            return FiniteSet(*[invt.subs(symbol, symbol - g)
-                               for invt in _invert(h, symbol)])
+            return _invert(h, symbol).subs(symbol, symbol - g)
 
     if f.is_Pow:
         base, expo = f.args
@@ -76,31 +74,26 @@ def _invert(f, symbol):
         expo_has_sym = expo.has(symbol)
 
         if not expo_has_sym:
+            res = _invert(base, symbol).subs(symbol, Pow(symbol, 1/expo))
             if expo.is_rational:
                 numer, denom = expo.as_numer_denom()
                 if numer == S.One or numer == - S.One:
-                    return FiniteSet(*[invt.subs(symbol, Pow(symbol, 1/expo)) for invt
-                                       in _invert(base, symbol)])
+                    return res
                 else:
-                    pos_res = [invt.subs(symbol, Pow(symbol, 1/expo)) for invt
-                               in _invert(base, symbol)]
-
                     if numer %2 == 0:
-                        neg_res = [-invt.subs(symbol, Pow(symbol, 1/expo)) for invt
-                                   in _invert(base, symbol)]
-                        return FiniteSet(*(pos_res + neg_res))
+                        n = Dummy()
+                        neg_res = imageset(Lambda(n, -n), res)
+                        return res + neg_res
                     else:
-                        return FiniteSet(*pos_res)
+                        return res
             else:
                 if not base.is_positive:
                     raise ValueError("x**w where w is irrational is not defined"
                                      " for negative x")
-                return FiniteSet(*[invt.subs(symbol, Pow(symbol, 1/expo)) for invt
-                                   in _invert(base, symbol)])
+                return res
 
         if not base_has_sym:
-            return FiniteSet(*[invt.subs(symbol, log(symbol)/log(base)) for invt
-                               in _invert(expo, symbol)])
+            return _invert(expo, symbol).subs(symbol, log(symbol)/log(base))
 
 
     raise NotImplementedError
