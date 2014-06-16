@@ -9,8 +9,8 @@ from sympy.core.function import Lambda
 
 from sympy.simplify.simplify import simplify, fraction
 
-from sympy.functions import (log, Abs)
-from sympy.sets import Interval, FiniteSet, EmptySet, imageset
+from sympy.functions import (log, Abs, tan, atan)
+from sympy.sets import Interval, FiniteSet, EmptySet, imageset, Union
 
 from sympy.polys import (roots, Poly, degree, together)
 
@@ -47,7 +47,7 @@ def _invert(f, symbol):
     if f.is_Symbol:
         return FiniteSet(f)
 
-    if hasattr(f, 'inverse'):
+    if hasattr(f, 'inverse') and not isinstance(f, C.TrigonometricFunction):
         return _invert(f.args[0], symbol).subs(symbol, f.inverse()(symbol))
 
     if isinstance(f, Abs):
@@ -94,6 +94,16 @@ def _invert(f, symbol):
 
         if not base_has_sym:
             return _invert(expo, symbol).subs(symbol, log(symbol)/log(base))
+
+    if isinstance(f, tan):
+        # something like tan(sin(x)) as f won't work, identify the case and raise a sane error
+        n = Dummy()
+        if isinstance(_invert(f.args[0], symbol), FiniteSet):
+            return Union(*[imageset(Lambda(symbol, invt),
+                                    imageset(Lambda(n, n*pi + atan(symbol)), S.Integers))
+                           for invt in _invert(f.args[0], symbol)])
+        else:
+            raise NotImplementedError
 
 
     raise NotImplementedError
