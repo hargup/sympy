@@ -1,7 +1,7 @@
 from sympy.sets.fancysets import ImageSet, Range
 from sympy.sets.sets import FiniteSet, Interval, imageset
 from sympy import (S, Symbol, Lambda, symbols, cos, sin, pi, oo, Basic,
-        Rational, sqrt)
+        Rational, sqrt, tan)
 from sympy.utilities.pytest import XFAIL
 import itertools
 
@@ -168,3 +168,11 @@ def test_intersections():
     assert -5 in S.Integers.intersect(Interval(-oo, 3))
     assert all(x.is_Integer
             for x in take(10, S.Integers.intersect(Interval(3, oo)) ))
+
+
+def test_ImageSet_simplification():
+    from sympy.abc import n, m
+    assert ImageSet(Lambda(n, n), S.Integers) == S.Integers
+    assert ImageSet(Lambda(n, sin(n)),
+                    ImageSet(Lambda(m, tan(m)), S.Integers)) == \
+            ImageSet(Lambda(m, sin(tan(m))), S.Integers)
