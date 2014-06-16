@@ -39,32 +39,32 @@ from sympy.solvers import solve
 
 def test_invert():
     x = Symbol('x', real= True)
-    assert invert(x + 3, x, y) == [y - 3]
-    assert invert(x*3, x, y) == [y / 3]
+    assert invert(x + 3, x, y) == FiniteSet(y - 3)
+    assert invert(x*3, x, y) == FiniteSet(y / 3)
 
-    assert invert(exp(x), x, y) == [log(y)]
-    assert invert(exp(3*x), x, y) == [log(y) / 3]
-    assert invert(exp(x + 3), x, y) == [log(y) - 3]
+    assert invert(exp(x), x, y) == FiniteSet(log(y))
+    assert invert(exp(3*x), x, y) == FiniteSet(log(y) / 3)
+    assert invert(exp(x + 3), x, y) == FiniteSet(log(y) - 3)
 
-    assert invert(exp(x) + 3, x, y) == [log(y - 3)]
-    assert invert(exp(x)*3, x, y) == [log(y / 3)]
+    assert invert(exp(x) + 3, x, y) == FiniteSet(log(y - 3))
+    assert invert(exp(x)*3, x, y) == FiniteSet(log(y / 3))
 
-    assert invert(log(x), x, y) == [exp(y)]
-    assert invert(log(3*x), x, y) == [exp(y) / 3]
-    assert invert(log(x + 3), x, y) == [exp(y) - 3]
+    assert invert(log(x), x, y) == FiniteSet(exp(y))
+    assert invert(log(3*x), x, y) == FiniteSet(exp(y) / 3)
+    assert invert(log(x + 3), x, y) == FiniteSet(exp(y) - 3)
 
-    assert invert(Abs(x), x, y) == [-y, y]
+    assert invert(Abs(x), x, y) == FiniteSet(-y, y)
 
-    assert invert(2**x, x, y) == [log(y)/log(2)]
-    assert invert(2**exp(x), x, y) == [log(log(y)/log(2))]
+    assert invert(2**x, x, y) == FiniteSet(log(y)/log(2))
+    assert invert(2**exp(x), x, y) == FiniteSet(log(log(y)/log(2)))
 
-    assert invert(x**2, x, y) == [sqrt(y), -sqrt(y)]
-    assert invert(x**Rational(1, 2), x, y) == [y**2]
+    assert invert(x**2, x, y) == FiniteSet(sqrt(y), -sqrt(y))
+    assert invert(x**Rational(1, 2), x, y) == FiniteSet(y**2)
 
     raises(ValueError, lambda: invert(x**pi, x, y))
 
     x = Symbol('x', positive = True)
-    assert invert(x**pi, x, y) == [y**(1/pi)]
+    assert invert(x**pi, x, y) == FiniteSet(y**(1/pi))
 
 
 @XFAIL
@@ -236,15 +236,15 @@ def test_atan2():
 
 
 def test_errorinverses():
-    assert solve_univariate_real(erf(x) - S.One/2, x)==FiniteSet(erfinv(S.One/2))
-    assert solve_univariate_real(erf(x) - S.One*2, x)==FiniteSet()
+    assert solve_univariate_real(erf(x) - S.One/2, x) == FiniteSet(erfinv(S.One/2))
+    assert solve_univariate_real(erf(x) - S.One*2, x) == FiniteSet()
 
-    assert solve_univariate_real(erfinv(x) - 2, x)==FiniteSet(erf(2))
+    assert solve_univariate_real(erfinv(x) - 2, x) == FiniteSet(erf(2))
 
-    assert solve_univariate_real(erfc(x) - S.One, x)==FiniteSet(erfcinv(S.One))
-    assert solve_univariate_real(erfc(x) - S.One*3, x)==FiniteSet()
+    assert solve_univariate_real(erfc(x) - S.One, x) == FiniteSet(erfcinv(S.One))
+    assert solve_univariate_real(erfc(x) - S.One*3, x) == FiniteSet()
 
-    assert solve_univariate_real(erfcinv(x) - 2,x)==FiniteSet(erfc(2))
+    assert solve_univariate_real(erfcinv(x) - 2,x) == FiniteSet(erfc(2))
 
 
 def test_piecewise():
