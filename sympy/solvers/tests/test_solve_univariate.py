@@ -73,9 +73,8 @@ def test_invert_tan():
 
     assert invert(tan(x), x, y) == \
             imageset(Lambda(n, n*pi + atan(y)), S.Integers)
-    assert invert(tan(exp(x), x, y)) == \
+    assert invert(tan(exp(x)), x, y) == \
                   imageset(Lambda(n, log(n*pi + atan(y))), S.Integers)
-
 
 
 @XFAIL
