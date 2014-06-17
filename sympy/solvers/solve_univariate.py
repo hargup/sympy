@@ -111,6 +111,7 @@ def _invert(f, symbol):
         # try to remove this dublication
         n = Dummy('n')
         if isinstance(_invert(f.args[0], symbol), FiniteSet):
+            # See: http://en.wikipedia.org/wiki/Sine#Inverse
             return Union(*[imageset(Lambda(symbol, invt),
                                     imageset(Lambda(n, n*pi + ((-S.One)**(n))*asin(symbol)), S.Integers))
                            for invt in _invert(f.args[0], symbol)])
@@ -264,7 +265,18 @@ def solve_as_poly(f, symbol):
             result = soln
             return result
         else:
-            raise NotImplementedError
+            # Try rewriting the equation in tan to solve for trigonometric
+            # functions
+            # TODO: checkout if there is any method to test if the equation
+            # is purely trigonometric
+            # XXX: This doesn't appear to very good place to add logic to solve
+            # trigonometric funtions, maybe we can factor out this piece to somewhere
+            # else.
+            g = f.rewrite(tan)
+            if g != f:
+                return solve_univariate_real(g, symbol)
+            else:
+                raise NotImplementedError
     else:
         return solve_univariate_real(f, symbol)
     raise NotImplementedError

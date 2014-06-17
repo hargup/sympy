@@ -315,3 +315,5 @@ def test_solve_trig():
     # TODO: checkout if there can be general method to simplify n + ((-1)**n)/2 to 2*n + 1/2
 
     assert solve_univariate_real(cos(x), x) == imageset(Lambda(n, n*pi + pi/2), S.Integers)
+
+    assert solve_univariate_real(cos(x) + sin(x), x) == imageset(Lambda(n, n*pi - pi/4), S.Integers)
