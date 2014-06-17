@@ -110,7 +110,6 @@ def _invert(f, symbol):
         # TODO: The code in this block seems to be very similar to the one above
         # try to remove this dublication
 
-        # TODO: the inverse function of sin can cos are not defined, fix it.
         n = Dummy()
         if isinstance(_invert(f.args[0], symbol), FiniteSet):
             return Union(*[imageset(Lambda(symbol, invt),
