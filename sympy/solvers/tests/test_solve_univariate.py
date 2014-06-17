@@ -90,12 +90,12 @@ def test_invert_sin_cos():
     raises(NotImplementedError, lambda: invert(sin(tan(x)), x))
 
     assert invert(sin(x), x, y) == \
-            imageset(Lambda(n, 2*n*pi + asin(y)), S.Integers)
+            imageset(Lambda(n, n*pi + asin(y)*(-S.One)**(n)), S.Integers)
     assert invert(cos(x), x, y) == \
-            imageset(Lambda(n, 2*n*pi + acos(y)), S.Integers)
+            imageset(Lambda(n, n*pi + pi/2 + ((-S.One)**(n))*(acos(y) - pi/2)), S.Integers)
 
     assert invert(sin(exp(x)), x, y) == \
-                  imageset(Lambda(n, log(2*n*pi + asin(y))), S.Integers)
+                  imageset(Lambda(n, log(n*pi + asin(y)*(-S.One)**(n))), S.Integers)
 
 
 @XFAIL
@@ -306,3 +306,12 @@ def test_solve_univariate_complex_log():
     ans = solve_univariate_complex(eq, x)
     ans2 = solve(eq, x)
     assert len(ans) == 5 and all(eq.subs(x, a).n(chop=True) == 0 for a in ans)
+
+
+def test_solve_trig():
+    from sympy.abc import n
+    assert solve_univariate_real(sin(x), x) == imageset(Lambda(n, n*pi), S.Integers)
+    assert solve_univariate_real(sin(x) - 1, x) == imageset(Lambda(n, n*pi + (-1)**n*pi/2), S.Integers)
+    # TODO: checkout if there can be general method to simplify n + ((-1)**n)/2 to 2*n + 1/2
+
+    assert solve_univariate_real(cos(x), x) == imageset(Lambda(n, n*pi + pi/2), S.Integers)

@@ -9,7 +9,8 @@ from sympy.core.function import Lambda
 
 from sympy.simplify.simplify import simplify, fraction
 
-from sympy.functions import (log, Abs, tan, atan, cot, acot, sec, csc)
+from sympy.functions import (log, Abs, tan, atan, cot, acot, sec, csc,
+                             sin, cos, acos, asin)
 from sympy.sets import Interval, FiniteSet, EmptySet, imageset, Union
 
 from sympy.polys import (roots, Poly, degree, together)
@@ -97,7 +98,7 @@ def _invert(f, symbol):
 
     if isinstance(f, tan) or isinstance(f, cot):
         # tan and cot have periods pi
-        n = Dummy()
+        n = Dummy('n')
         if isinstance(_invert(f.args[0], symbol), FiniteSet):
             return Union(*[imageset(Lambda(symbol, invt),
                                     imageset(Lambda(n, n*pi + f.inverse()(symbol)), S.Integers))
@@ -105,19 +106,25 @@ def _invert(f, symbol):
         else:
             raise NotImplementedError
 
-    if isinstance(f, C.TrigonometricFunction) and (not isinstance(f, sec) or not isinstance(f, csc)):
-        # Every other trigonometric function has period 2*pi
+    if isinstance(f, sin):
         # TODO: The code in this block seems to be very similar to the one above
         # try to remove this dublication
-
-        n = Dummy()
+        n = Dummy('n')
         if isinstance(_invert(f.args[0], symbol), FiniteSet):
             return Union(*[imageset(Lambda(symbol, invt),
-                                    imageset(Lambda(n, 2*n*pi + f.inverse()(symbol)), S.Integers))
+                                    imageset(Lambda(n, n*pi + ((-S.One)**(n))*asin(symbol)), S.Integers))
                            for invt in _invert(f.args[0], symbol)])
         else:
             raise NotImplementedError
 
+    if isinstance(f, cos):
+        n = Dummy('n')
+        if isinstance(_invert(f.args[0], symbol), FiniteSet):
+            return Union(*[imageset(Lambda(symbol, invt),
+                                    imageset(Lambda(n, n*pi + pi/2 + ((-S.One)**(n))*(acos(symbol) - pi/2)), S.Integers))
+                           for invt in _invert(f.args[0], symbol)])
+        else:
+            raise NotImplementedError
 
 
     raise NotImplementedError
@@ -181,19 +188,18 @@ def solve_univariate_real(f, symbol):
     if not f.has(symbol):
         return EmptySet()
     elif f.is_Mul:
-        result = FiniteSet(*flatten([list(solve_univariate_real(m, symbol)) for m in f.args]))
+        result = Union(*[solve_univariate_real(m, symbol) for m in f.args])
     elif f.is_Function:
         if f.is_Piecewise:
             result = EmptySet()
             expr_set_pairs = f.as_expr_set_pairs()
             for (expr, in_set) in expr_set_pairs:
-                solns = [s for s in solve_univariate_real(expr, symbol)
-                         if s in in_set]
+                solns = solve_univariate_real(expr, symbol).intersect(in_set)
                 result = result + FiniteSet(solns)
         else:
             v = Dummy()
-            inversion = invert(f, symbol, v)
-            result = FiniteSet(*[i.subs({v: 0}) for i in inversion])
+            invt = invert(f, symbol, v)
+            result = invt.subs(v, 0)
     else:
         f = together(f, deep=True)
         g, h = fraction(f)
@@ -203,9 +209,16 @@ def solve_univariate_real(f, symbol):
             result = solve_univariate_real(g, symbol) - \
                     solve_univariate_real(h, symbol)
 
-    result = [s for s in result if s.is_bounded is not False and s.is_real is True
-              and domain_check(original_eq, symbol, s)]
-    return FiniteSet(result)
+    if isinstance(result, FiniteSet):
+        result = [s for s in result if s.is_bounded is not False and s.is_real is True
+                  and domain_check(original_eq, symbol, s)]
+        return FiniteSet(result)
+    else:
+        # don't know how to do domain_check and test for .is_bounded condition
+        # for the members of infinitely indexed sets
+
+        # I guess solve_as_poly should be expected to return real results only
+        return result
 
 
 def solve_as_poly(f, symbol):
@@ -241,14 +254,15 @@ def solve_as_poly(f, symbol):
             if len(soln) < deg:
                 raise ValueError('Couldn\'t find all the roots of'
                                  'the equation %s' % f)
+
+            soln = soln.intersect(S.Reals)
             if gen != symbol:
                 u = Dummy()
                 v = Dummy()
-                inversion = invert(gen - u, symbol, v)
-                soln = FiniteSet(*[i.subs({u: s, v: 0}) for i in
-                                         inversion for s in soln])
+                invt = invert(gen - u, symbol, v)
+                soln = Union(*[invt.subs({u: s, v: 0}) for s in soln])
             result = soln
-            return FiniteSet(result)
+            return result
         else:
             raise NotImplementedError
     else:
