@@ -9,7 +9,7 @@ from sympy.core.function import Lambda
 
 from sympy.simplify.simplify import simplify, fraction
 
-from sympy.functions import (log, Abs, tan, atan)
+from sympy.functions import (log, Abs, tan, atan, cot, acot, sec, csc)
 from sympy.sets import Interval, FiniteSet, EmptySet, imageset, Union
 
 from sympy.polys import (roots, Poly, degree, together)
@@ -95,15 +95,30 @@ def _invert(f, symbol):
         if not base_has_sym:
             return _invert(expo, symbol).subs(symbol, log(symbol)/log(base))
 
-    if isinstance(f, tan):
-        # something like tan(sin(x)) as f won't work, identify the case and raise a sane error
+    if isinstance(f, tan) or isinstance(f, cot):
+        # tan and cot have periods pi
         n = Dummy()
         if isinstance(_invert(f.args[0], symbol), FiniteSet):
             return Union(*[imageset(Lambda(symbol, invt),
-                                    imageset(Lambda(n, n*pi + atan(symbol)), S.Integers))
+                                    imageset(Lambda(n, n*pi + f.inverse()(symbol)), S.Integers))
                            for invt in _invert(f.args[0], symbol)])
         else:
             raise NotImplementedError
+
+    if isinstance(f, C.TrigonometricFunction) and (not isinstance(f, sec) or not isinstance(f, csc)):
+        # Every other trigonometric function has period 2*pi
+        # TODO: The code in this block seems to be very similar to the one above
+        # try to remove this dublication
+
+        # TODO: the inverse function of sin can cos are not defined, fix it.
+        n = Dummy()
+        if isinstance(_invert(f.args[0], symbol), FiniteSet):
+            return Union(*[imageset(Lambda(symbol, invt),
+                                    imageset(Lambda(n, 2*n*pi + f.inverse()(symbol)), S.Integers))
+                           for invt in _invert(f.args[0], symbol)])
+        else:
+            raise NotImplementedError
+
 
 
     raise NotImplementedError
