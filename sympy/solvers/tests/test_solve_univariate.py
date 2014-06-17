@@ -4,7 +4,7 @@ from sympy import (
     acos, asin, atan, atanh, cos, cosh, diff, erf, erfinv, erfc, erfcinv, erf2,
     erf2inv, exp, expand, im, log, pi, re, sec, sin, sinh, sqrt, sstr, symbols,
     sympify, tan, tanh, simplify, atan2, arg, Mul, SparseMatrix, ask, tan,
-    Lambda, imageset)
+    Lambda, imageset, cot, acot)
 
 from sympy.core.function import nfloat
 from sympy.solvers.solvers import _invert, unrad, checksol, posify, _ispow, \
@@ -67,14 +67,35 @@ def test_invert():
     assert invert(x**pi, x, y) == FiniteSet(y**(1/pi))
 
 
-def test_invert_tan():
+def test_invert_tan_cot():
     from sympy.abc import x, y, n
+    raises(NotImplementedError, lambda: invert(tan(cot(x)), x))
     raises(NotImplementedError, lambda: invert(tan(sin(x)), x))
+    raises(NotImplementedError, lambda: invert(cot(cot(x)), x))
 
     assert invert(tan(x), x, y) == \
             imageset(Lambda(n, n*pi + atan(y)), S.Integers)
     assert invert(tan(exp(x)), x, y) == \
                   imageset(Lambda(n, log(n*pi + atan(y))), S.Integers)
+
+    assert invert(cot(x), x, y) == \
+            imageset(Lambda(n, n*pi + acot(y)), S.Integers)
+    assert invert(cot(exp(x)), x, y) == \
+                  imageset(Lambda(n, log(n*pi + acot(y))), S.Integers)
+
+
+def test_invert_sin_cos_sec_cosec():
+    from sympy.abc import x, y, n
+    raises(NotImplementedError, lambda: invert(sin(sin(x)), x))
+    raises(NotImplementedError, lambda: invert(sin(tan(x)), x))
+
+    assert invert(sin(x), x, y) == \
+            imageset(Lambda(n, 2*n*pi + asin(y)), S.Integers)
+    assert invert(cot(x), x, y) == \
+            imageset(Lambda(n, 2*n*pi + acos(y)), S.Integers)
+
+    assert invert(sin(exp(x)), x, y) == \
+                  imageset(Lambda(n, log(2*n*pi + asin(y))), S.Integers)
 
 
 @XFAIL
