@@ -84,14 +84,14 @@ def test_invert_tan_cot():
                   imageset(Lambda(n, log(n*pi + acot(y))), S.Integers)
 
 
-def test_invert_sin_cos_sec_cosec():
+def test_invert_sin_cos():
     from sympy.abc import x, y, n
     raises(NotImplementedError, lambda: invert(sin(sin(x)), x))
     raises(NotImplementedError, lambda: invert(sin(tan(x)), x))
 
     assert invert(sin(x), x, y) == \
             imageset(Lambda(n, 2*n*pi + asin(y)), S.Integers)
-    assert invert(cot(x), x, y) == \
+    assert invert(cos(x), x, y) == \
             imageset(Lambda(n, 2*n*pi + acos(y)), S.Integers)
 
     assert invert(sin(exp(x)), x, y) == \
