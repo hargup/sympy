@@ -10,7 +10,7 @@ from sympy.core.function import Lambda
 from sympy.simplify.simplify import simplify, fraction
 
 from sympy.functions import (log, Abs, tan, atan, cot, acot, sec, csc,
-                             sin, cos, acos, asin)
+                             sin, cos, acos, asin, tanh)
 from sympy.sets import Interval, FiniteSet, EmptySet, imageset, Union
 
 from sympy.polys import (roots, Poly, degree, together)
@@ -41,7 +41,7 @@ def _invert(f, symbol):
     """
     # XXX: there is already a _invert function in the namespace in the
     # polynomials module be careful.
-    # We might dispach it into the functions themselves
+    # We might dispatch it into the functions themselves
     if not f.has(symbol):
         raise ValueError("Inverse of constant function doesn't exist")
 
@@ -270,9 +270,16 @@ def solve_as_poly(f, symbol):
             # TODO: checkout if there is any method to test if the equation
             # is purely trigonometric
             # XXX: This doesn't appear to very good place to add logic to solve
-            # trigonometric funtions, maybe we can factor out this piece to somewhere
+            # trigonometric functions, maybe we can factor out this piece to somewhere
             # else.
             g = f.rewrite(tan)
+            if g != f:
+                return solve_univariate_real(g, symbol)
+            else:
+                raise NotImplementedError
+
+            # for hyperbolic trigonometric functions
+            g = f.rewrite(tanh)
             if g != f:
                 return solve_univariate_real(g, symbol)
             else:
