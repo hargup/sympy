@@ -105,29 +105,6 @@ def _invert(f, symbol):
                            for invt in _invert(f.args[0], symbol)])
         else:
             raise NotImplementedError
-
-    if isinstance(f, sin):
-        # TODO: The code in this block seems to be very similar to the one above
-        # try to remove this dublication
-        n = Dummy('n')
-        if isinstance(_invert(f.args[0], symbol), FiniteSet):
-            # See: http://en.wikipedia.org/wiki/Sine#Inverse
-            return Union(*[imageset(Lambda(symbol, invt),
-                                    imageset(Lambda(n, n*pi + ((-S.One)**(n))*asin(symbol)), S.Integers))
-                           for invt in _invert(f.args[0], symbol)])
-        else:
-            raise NotImplementedError
-
-    if isinstance(f, cos):
-        n = Dummy('n')
-        if isinstance(_invert(f.args[0], symbol), FiniteSet):
-            return Union(*[imageset(Lambda(symbol, invt),
-                                    imageset(Lambda(n, n*pi + pi/2 + ((-S.One)**(n))*(acos(symbol) - pi/2)), S.Integers))
-                           for invt in _invert(f.args[0], symbol)])
-        else:
-            raise NotImplementedError
-
-
     raise NotImplementedError
 
 
