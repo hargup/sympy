@@ -67,6 +67,7 @@ def test_invert():
     assert invert(x**pi, x, y) == FiniteSet(y**(1/pi))
 
 
+@XFAIL
 def test_invert_tan_cot():
     from sympy.abc import x, y, n
     raises(NotImplementedError, lambda: invert(tan(cot(x)), x))

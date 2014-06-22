@@ -12,6 +12,7 @@ from sympy.simplify.simplify import simplify, fraction
 from sympy.functions import (log, Abs, tan, atan, cot, acot, sec, csc,
                              sin, cos, acos, asin)
 from sympy.sets import Interval, FiniteSet, EmptySet, imageset, Union
+from sympy.functions import (log, Abs)
 
 from sympy.polys import (roots, Poly, degree, together)
 
@@ -48,7 +49,7 @@ def _invert(f, symbol):
     if f.is_Symbol:
         return FiniteSet(f)
 
-    if hasattr(f, 'inverse') and not isinstance(f, C.TrigonometricFunction):
+    if hasattr(f, 'inverse'):
         return _invert(f.args[0], symbol).subs(symbol, f.inverse()(symbol))
 
     if isinstance(f, Abs):
