@@ -204,14 +204,6 @@ class ImageSet(Set):
     16
     """
     def __new__(cls, lamda, base_set):
-        if lamda.variables[0] == lamda.expr:
-            return base_set
-
-        if isinstance(base_set, ImageSet):
-            # XXX: doesn't work for multivariate lambda(s)
-            return ImageSet(Lambda(base_set.lamda.variables[0],
-                                   lamda.expr.subs(lamda.variables[0], base_set.lamda.expr)),
-                            base_set.base_set)
         return Basic.__new__(cls, lamda, base_set)
 
     lamda = property(lambda self: self.args[0])
