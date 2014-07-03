@@ -364,6 +364,9 @@ def test_contains():
 
     assert S.EmptySet.contains(1) is False
 
+    assert Interval(0, oo).contains(I) is False
+    assert Interval(0, oo).contains(I + 1) is False
+
 
 def test_interval_symbolic():
     x = Symbol('x')
@@ -652,8 +655,6 @@ def test_image_EmptySet():
 
 
 def test_issue_5724():
-    raises(TypeError, lambda: I in Interval(-oo,oo))
-    raises(TypeError, lambda: Interval(-oo,oo).contains(I))
     raises(TypeError, lambda: I > 2)
 
 

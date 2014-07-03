@@ -841,6 +841,9 @@ class Interval(Set, EvalfMixin):
         return FiniteSet(self.start, self.end)
 
     def _contains(self, other):
+        if other.is_real is False:
+            return False
+
         if self.left_open:
             expr = other > self.start
         else:
