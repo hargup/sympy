@@ -1,7 +1,7 @@
 from sympy import (Symbol, Set, Union, Interval, oo, S, sympify, nan,
     GreaterThan, LessThan, Max, Min, And, Or, Eq, Ge, Le, Gt, Lt, Float,
     FiniteSet, Intersection, imageset, I, true, false, ProductSet, E,
-    sqrt, Complement, EmptySet)
+    sqrt, Complement, EmptySet, Lambda, pi)
 from sympy.mpmath import mpi
 
 from sympy.utilities.pytest import raises
@@ -140,6 +140,11 @@ def test_Complement():
     assert not 1 in Complement(S.Reals, S.Naturals, evaluate=False)
 
     assert S.UniversalSet.complement(S.Integers) == EmptySet()
+
+    from sympy.abc import n
+    assert Complement(imageset(Lambda(n, 2*n), S.Integers),
+                      imageset(Lambda(n, 2*n + 1), S.Integers)) == \
+            imageset(Lambda(n, 2*n), S.Integers)
 
 
 def test_complement():

@@ -1388,6 +1388,9 @@ class Complement(Set, EvalfMixin):
         if isinstance(B, Union):
             return Intersection(s.complement(A) for s in B.args)
 
+        if A.intersect(B) == S.EmptySet:
+            return A
+
         result = B._complement(A)
         if result != None:
             return result
