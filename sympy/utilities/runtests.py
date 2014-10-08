@@ -464,7 +464,7 @@ def _test(*paths, **kwargs):
     import warnings
     warnings.simplefilter("error", SymPyDeprecationWarning)
 
-    test_files = t.get_test_files('sympy')
+    test_files = t.get_test_files('bioinformatics')
 
     not_blacklisted = [f for f in test_files
                        if not any(b in f for b in blacklist)]
